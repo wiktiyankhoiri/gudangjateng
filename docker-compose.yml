@@ -1,0 +1,66 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gudangjateng-app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - APP_NAME=${APP_NAME:-GudangJateng}
+      - APP_ENV=${APP_ENV:-production}
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=${APP_DEBUG:-false}
+      - APP_URL=${APP_URL}
+      - APP_LOCALE=${APP_LOCALE:-id}
+      - APP_FALLBACK_LOCALE=${APP_FALLBACK_LOCALE:-en}
+      - APP_TIMEZONE=${APP_TIMEZONE:-Asia/Jakarta}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-gudangjateng}
+      - DB_USERNAME=${DB_USERNAME:-gudangjateng}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SESSION_DRIVER=${SESSION_DRIVER:-database}
+      - SESSION_LIFETIME=${SESSION_LIFETIME:-120}
+      - SESSION_ENCRYPT=${SESSION_ENCRYPT:-true}
+      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+      - CACHE_STORE=${CACHE_STORE:-database}
+      - LOG_CHANNEL=${LOG_CHANNEL:-daily}
+      - LOG_LEVEL=${LOG_LEVEL:-warning}
+      - BCRYPT_ROUNDS=${BCRYPT_ROUNDS:-12}
+      - MAIL_MAILER=${MAIL_MAILER:-log}
+    volumes:
+      - app-storage:/var/www/html/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gudangjateng
+
+  db:
+    image: postgres:18-alpine
+    container_name: gudangjateng-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_DATABASE:-gudangjateng}
+      - POSTGRES_USER=${DB_USERNAME:-gudangjateng}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-gudangjateng} -d ${DB_DATABASE:-gudangjateng}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gudangjateng
+
+volumes:
+  app-storage:
+  db-data:
+
+networks:
+  gudangjateng:
+    driver: bridge
