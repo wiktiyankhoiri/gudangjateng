@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ $title ?? 'Login - GudangJateng' }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-icon.png') }}">
     @vite(['resources/css/app.css'])
     @stack('styles')
 </head>

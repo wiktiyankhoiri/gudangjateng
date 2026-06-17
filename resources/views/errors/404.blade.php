@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>404 Error Page | GudangJateng</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-icon.png') }}">
     @vite(['resources/css/app.css'])
 </head>
 <body class="bg-white dark:bg-gray-900 font-inter antialiased">
