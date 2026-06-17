@@ -325,7 +325,7 @@ if ($isDashboard) $alpineSelected = 'Beranda';
                                 @endif
                                 @if($showSystem)
                                 <li>
-                                    <a href="{{ route('pengaturan.tentangsistem.index') }}" class="menu-dropdown-item group" x-bind:class="page === 'tentangsistem' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                                    <a href="{{ route('pengaturan.tentangsistem.index') }}" class="menu-dropdown-item group" x-bind:class="page === 'system' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
                                         Tentang Sistem
                                     </a>
                                 </li>

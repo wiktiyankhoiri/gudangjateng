@@ -122,9 +122,10 @@ $pageMap = [
 
     // Notifikasi
     'notifications.all' => 'notifikasi',
-    'pengaturan.system.index' => 'system',
-    'pengaturan.system.prune-audit' => 'system',
-    'pengaturan.system.clear-cache' => 'system',
+    'pengaturan.tentangsistem.index' => 'system',
+    'pengaturan.tentangsistem.prune-audit' => 'system',
+    'pengaturan.tentangsistem.clear-cache' => 'system',
+    'pengaturan.tentangsistem.cleanup-logs' => 'system',
 ];
 $page = $pageMap[$page] ?? null;
 
