@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\AuditLog;
+use App\Services\DatabaseBackupService;
 
 class BackupController extends Controller
 {
@@ -68,7 +68,7 @@ class BackupController extends Controller
             $filename = 'backup-' . date('Y-m-d-His') . '.sql';
             $filepath = $this->backupPath . '/' . $filename;
 
-            $sql = $this->generateDatabaseDump();
+            $sql = app(DatabaseBackupService::class)->generateDump();
 
             if (file_put_contents($filepath, $sql) === false) {
                 throw new \Exception('Gagal menyimpan file backup');
@@ -139,121 +139,6 @@ class BackupController extends Controller
         $this->logBackup($filename, 'deleted', 'Backup dihapus');
 
         return redirect()->route('pengaturan.backup.index')->with('success', 'Backup berhasil dihapus');
-    }
-
-    private function generateDatabaseDump(): string
-    {
-        $output = "-- Database Backup\n";
-        $output .= "-- Created: " . date('Y-m-d H:i:s') . "\n";
-        $output .= "-- User: " . auth()->user()->nama . " (" . auth()->user()->username . ")\n";
-        $output .= "-- Database: " . DB::getDatabaseName() . "\n\n";
-
-        $output .= "SET session_replication_role = 'replica';\n\n";
-
-        $tables = DB::select(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name != 'migrations' ORDER BY table_name"
-        );
-
-        $allTables = array_map(function ($t) { return $t->table_name; }, $tables);
-        $reverseTables = array_reverse($allTables);
-
-        foreach ($reverseTables as $tableName) {
-            $output .= "DROP TABLE IF EXISTS {$tableName} CASCADE;\n";
-        }
-        $output .= "\n";
-
-        foreach ($allTables as $tableName) {
-            $createSql = $this->getCreateTableSql($tableName);
-            $output .= $createSql . ";\n\n";
-        }
-
-        foreach ($allTables as $tableName) {
-            DB::table($tableName)->orderBy(DB::raw('1'))->chunk(500, function ($rows) use (&$output, $tableName) {
-                if ($rows->isEmpty()) return;
-
-                $columns = implode(', ', array_keys((array)$rows->first()));
-
-                foreach ($rows as $row) {
-                    $values = [];
-                    foreach ((array)$row as $value) {
-                        if (is_null($value)) {
-                            $values[] = 'NULL';
-                        } else {
-                            $values[] = DB::getPdo()->quote($value);
-                        }
-                    }
-
-                    $output .= "INSERT INTO {$tableName} ({$columns}) VALUES (" . implode(', ', $values) . ");\n";
-                }
-            });
-            $output .= "\n";
-        }
-
-        $output .= "SET session_replication_role = 'origin';\n";
-
-        return $output;
-    }
-
-    private function getCreateTableSql(string $tableName): string
-    {
-        $columns = DB::select(
-            "SELECT column_name, data_type, character_maximum_length, is_nullable, column_default, ordinal_position
-             FROM information_schema.columns
-             WHERE table_schema = 'public' AND table_name = ?
-             ORDER BY ordinal_position",
-            [$tableName]
-        );
-
-        $pkCols = DB::select(
-            "SELECT kcu.column_name
-             FROM information_schema.table_constraints tc
-             JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
-             WHERE tc.table_schema = 'public' AND tc.table_name = ? AND tc.constraint_type = 'PRIMARY KEY'
-             ORDER BY kcu.ordinal_position",
-            [$tableName]
-        );
-
-        $pkColumns = array_map(function ($c) { return $c->column_name; }, $pkCols);
-
-        $sql = "CREATE TABLE {$tableName} (\n";
-
-        foreach ($columns as $i => $col) {
-            $colName = $col->column_name;
-            $isSerial = in_array($colName, $pkColumns) && str_contains($col->column_default ?? '', 'nextval');
-
-            if ($isSerial) {
-                $sql .= "    {$colName} SERIAL";
-            } else {
-                if ($col->data_type === 'character varying' && $col->character_maximum_length) {
-                    $sql .= "    {$colName} varchar({$col->character_maximum_length})";
-                } elseif ($col->data_type === 'character varying') {
-                    $sql .= "    {$colName} text";
-                } else {
-                    $sql .= "    {$colName} {$col->data_type}";
-                }
-
-                if ($col->column_default !== null && !str_contains($col->column_default, 'nextval')) {
-                    $sql .= " DEFAULT {$col->column_default}";
-                }
-            }
-
-            if ($col->is_nullable !== 'YES' && !$isSerial) {
-                $sql .= " NOT NULL";
-            }
-
-            if ($i < count($columns) - 1) {
-                $sql .= ",";
-            }
-            $sql .= "\n";
-        }
-
-        if (!empty($pkColumns)) {
-            $sql .= ",\n    PRIMARY KEY (" . implode(', ', $pkColumns) . ")\n";
-        }
-
-        $sql .= ")";
-
-        return $sql;
     }
 
     private function getBackupList(): array
