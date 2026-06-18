@@ -1,0 +1,19 @@
+{
+    "id": "/",
+    "name": "GudangJateng",
+    "short_name": "GudangJateng",
+    "description": "Sistem Manajemen Stok Gudang Jateng",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#ffffff",
+    "theme_color": "#0A1633",
+    "icons": [
+        {
+            "src": "/images/favicon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

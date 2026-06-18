@@ -17,3 +17,10 @@ Alpine.start();
 window.TomSelect = TomSelect;
 window.flatpickr = flatpickr;
 window.ApexCharts = ApexCharts;
+
+// Register PWA Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js');
+    });
+}
