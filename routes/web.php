@@ -20,7 +20,7 @@ use App\Http\Controllers\KartuStokController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SearchController;
-use App\Http\Controllers\LaporansalesstokController;
+use App\Http\Controllers\LaporanSalesStokController;
 use App\Http\Controllers\LaporanBarangMasukController;
 use App\Http\Controllers\LaporanBarangKeluarController;
 use App\Http\Controllers\LaporanMutasiController;
@@ -112,8 +112,8 @@ Route::middleware('auth')->group(function () {
 
     // ===================== LAPORAN =====================
     Route::prefix('laporan')->name('laporan.')->middleware('role:admin,audit,manager,sales')->group(function () {
-        Route::get('salesstok', [LaporansalesstokController::class, 'index'])->name('salesstok.index');
-        Route::get('salesstok/export', [LaporansalesstokController::class, 'export'])->name('salesstok.export');
+        Route::get('salesstok', [LaporanSalesStokController::class, 'index'])->name('salesstok.index');
+        Route::get('salesstok/export', [LaporanSalesStokController::class, 'export'])->name('salesstok.export');
         Route::get('barangmasuk', [LaporanBarangMasukController::class, 'index'])->name('barangmasuk.index');
         Route::get('barangkeluar', [LaporanBarangKeluarController::class, 'index'])->name('barangkeluar.index');
         Route::get('kartustok', [KartuStokController::class, 'index'])->name('kartustok.index');
