@@ -71,7 +71,7 @@ if ($isDashboard) $alpineSelected = 'Beranda';
                     <img src="{{ asset('images/logo-full.png') }}" alt="GudangJateng" class="h-8 w-auto">
                 </span>
                 <span class="logo-icon hidden lg:flex items-center justify-center" x-bind:class="sidebarToggle ? '' : 'lg:hidden'">
-                    <img src="{{ asset('images/logo-icon.png') }}" alt="G" class="h-8 w-auto">
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="G" class="w-8 h-8">
                 </span>
             </div>
         </a>

@@ -207,7 +207,9 @@ $currentBreadcrumbs = $breadcrumbsMap[$page ?? 'ecommerce'] ?? [['label' => 'Ber
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ $title ?? 'GudangJateng' }}</title>
-    <link rel="icon" type="image/png" href="{{ asset('images/logo-icon.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('images/favicon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon.png') }}">
 
     @vite(['resources/css/app.css'])
     @stack('styles')
