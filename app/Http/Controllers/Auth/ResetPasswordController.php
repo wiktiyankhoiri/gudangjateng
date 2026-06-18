@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class ResetPasswordController extends Controller
 {
@@ -38,8 +39,8 @@ class ResetPasswordController extends Controller
             return back()->with('error', 'Token reset password tidak valid');
         }
 
-        // Validasi hash token
-        if (hash('sha256', $token) !== $resetToken->token) {
+        // Validasi hash token (timing-safe comparison)
+        if (!hash_equals($resetToken->token, hash('sha256', $token))) {
             return back()->with('error', 'Token reset password tidak valid');
         }
 
@@ -54,7 +55,7 @@ class ResetPasswordController extends Controller
         $user = User::where('email', $email)->first();
 
         if (!$user) {
-            return back()->with('error', 'User tidak ditemukan');
+            return back()->with('error', 'Token reset password tidak valid');
         }
 
         $user->update([
@@ -63,6 +64,8 @@ class ResetPasswordController extends Controller
 
         // Hapus token
         DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+        Log::info("Password reset successful", ['user' => $user->username, 'email' => $email]);
 
         return redirect()->route('login')->with('success', 'Password berhasil direset. Silakan login dengan password baru.');
     }

@@ -349,3 +349,71 @@ WHERE action IN ('restore', 'backup')
 ORDER BY created_at DESC
 LIMIT 10;
 ```
+
+---
+
+## 8. Reset Password: Email Tidak Terkirim
+
+### Gejala
+
+User klik "Kirim Link Reset" tapi email tidak pernah masuk ke inbox.
+
+### Penyebab
+
+`MAIL_MAILER=log` — email hanya ditulis ke file log, tidak benar-benar dikirim. Ini setting default untuk development local.
+
+### Solusi: Setup Gmail SMTP di Production
+
+#### Langkah 1: Buat App Password di Google
+
+1. Login ke akun Gmail yang akan digunakan
+2. Buka https://myaccount.google.com/security
+3. Aktifkan **2-Step Verification** (jika belum)
+4. Buka https://myaccount.google.com/apppasswords
+5. Buat App Password baru → pilih "Mail" → copy 16 karakter password
+
+#### Langkah 2: Update `.env` di VPS
+
+```bash
+cd /var/www/gudangjateng
+nano .env
+```
+
+Ubah bagian MAIL:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=abcdefghijklmnop
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=your-email@gmail.com
+MAIL_FROM_NAME="GudangJateng"
+```
+
+#### Langkah 3: Clear config cache
+
+```bash
+php artisan config:cache
+```
+
+#### Langkah 4: Test kirim email
+
+```bash
+php artisan tinker
+>>> $user = App\Models\User::first();
+>>> $user->notify(new Illuminate\Auth\Notifications\ResetPassword('test-token'));
+```
+
+Cek inbox Gmail tujuan. Jika email masuk, setup berhasil.
+
+### Troubleshooting SMTP
+
+| Masalah | Solusi |
+|---------|--------|
+| Connection refused | Pastikan port 587 tidak diblokir firewall VPS |
+| Authentication failed | Pastikan App Password benar (bukan password Gmail biasa) |
+| Email masuk spam | Verifikasi domain pengirim di Gmail |
+| Timeout | Coba `MAIL_PORT=465` dan `MAIL_ENCRYPTION=ssl` |
+
