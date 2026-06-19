@@ -58,6 +58,7 @@ class MutasiController extends Controller
             'title' => 'Tambah Mutasi',
             'barang' => Barang::orderBy('nama_barang', 'ASC')->get(),
             'stokPerBarang' => $stokPerBarang,
+            'noMutasi' => Mutasi::generateNoMutasi(),
         ]);
     }
 
@@ -86,14 +87,10 @@ class MutasiController extends Controller
         DB::beginTransaction();
 
         try {
-            $existing = Mutasi::where('no_mutasi', $post['no_mutasi'])->first();
-
-            if ($existing) {
-                throw new BusinessException('No mutasi sudah digunakan');
-            }
+            $noMutasi = Mutasi::generateNoMutasi();
 
             $mutasi = Mutasi::create([
-                'no_mutasi' => $post['no_mutasi'],
+                'no_mutasi' => $noMutasi,
                 'tanggal' => $post['tanggal'],
                 'keterangan' => $post['keterangan'],
             ]);
@@ -148,7 +145,7 @@ class MutasiController extends Controller
             DB::commit();
 
             $this->writeAuditLog('create', $mutasiId, 'Mutasi berhasil disimpan', [
-                'no_mutasi' => $post['no_mutasi'],
+                'no_mutasi' => $noMutasi,
                 'detail' => $group,
             ]);
 
@@ -158,7 +155,7 @@ class MutasiController extends Controller
                 $tipeLabel = $g['tipe'] === 'baik_ke_rusak' ? 'Baik→Rusak' : 'Rusak→Baik';
                 $barangNames[] = ($b ? $b->nama_barang : 'Barang') . ' (' . $tipeLabel . ' ' . $g['qty'] . ')';
             }
-            $message = $post['no_mutasi'] . ': ' . implode(', ', $barangNames);
+            $message = $noMutasi . ': ' . implode(', ', $barangNames);
 
             // Notifikasi mutasi dinonaktifkan - hanya BM & BK
             // Notification::notify('Mutasi Baru', $message, 'mutasi', $mutasiId);
@@ -221,14 +218,6 @@ class MutasiController extends Controller
         DB::beginTransaction();
 
         try {
-            $existing = Mutasi::where('no_mutasi', $post['no_mutasi'])
-                ->where('id', '!=', $mutasi->id)
-                ->first();
-
-            if ($existing) {
-                throw new BusinessException('No mutasi sudah digunakan');
-            }
-
             $oldDetail = MutasiDetail::where('mutasi_id', $mutasi->id)->get();
 
             foreach ($oldDetail as $d) {
@@ -242,7 +231,6 @@ class MutasiController extends Controller
             MutasiDetail::where('mutasi_id', $mutasi->id)->delete();
 
             $mutasi->update([
-                'no_mutasi' => $post['no_mutasi'],
                 'tanggal' => $post['tanggal'],
                 'keterangan' => $post['keterangan'],
             ]);
@@ -297,7 +285,7 @@ class MutasiController extends Controller
             DB::commit();
 
             $this->writeAuditLog('update', $mutasi->id, 'Mutasi berhasil diupdate', [
-                'no_mutasi' => $post['no_mutasi'],
+                'no_mutasi' => $mutasi->no_mutasi,
                 'old_detail' => $oldDetail->toArray(),
                 'new_detail' => $group,
             ]);
@@ -308,7 +296,7 @@ class MutasiController extends Controller
                 $tipeLabel = $g['tipe'] === 'baik_ke_rusak' ? 'Baik→Rusak' : 'Rusak→Baik';
                 $barangNames[] = ($b ? $b->nama_barang : 'Barang') . ' (' . $tipeLabel . ' ' . $g['qty'] . ')';
             }
-            $message = $post['no_mutasi'] . ': ' . implode(', ', $barangNames);
+            $message = $mutasi->no_mutasi . ': ' . implode(', ', $barangNames);
 
             // Notifikasi mutasi dinonaktifkan
             // Notification::notify('Mutasi Diupdate', $message, 'mutasi', $mutasi->id);

@@ -26,4 +26,23 @@ class Mutasi extends Model
     {
         return $this->hasMany(MutasiDetail::class);
     }
+
+    /**
+     * Generate nomor mutasi otomatis.
+     * Format: DAT{ddMMyyyy}-{nnn} (urutan global, tidak pernah reset)
+     */
+    public static function generateNoMutasi(): string
+    {
+        $today = now()->format('dmY');
+
+        // Ambil nomor urut tertinggi dari mutasi terakhir
+        $last = static::orderBy('id', 'desc')->first();
+
+        $nextSeq = 1;
+        if ($last && preg_match('/-(\d+)$/', $last->no_mutasi, $matches)) {
+            $nextSeq = (int) $matches[1] + 1;
+        }
+
+        return 'DAT' . $today . '-' . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+    }
 }
