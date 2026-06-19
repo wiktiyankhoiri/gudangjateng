@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\AuditLog;
+use App\Models\User;
 use App\Services\DatabaseBackupService;
 
 class RestoreController extends Controller
@@ -66,6 +68,9 @@ class RestoreController extends Controller
 
         $service = app(DatabaseBackupService::class);
 
+        // Save username before restore (session will be destroyed during restore)
+        $username = auth()->user()->username;
+
         try {
             // Step 1: Create safety backup before restore
             $safetyFilename = 'safety-backup-' . date('Y-m-d-His') . '.sql';
@@ -81,22 +86,33 @@ class RestoreController extends Controller
             $message = 'Restore berhasil. Safety backup: ' . $safetyFilename;
 
             if ($result['rolledBack']) {
-                // Restore was rolled back due to query failures
+                // Restore was rolled back — session is still intact (DB unchanged)
                 $message .= " | ⚠️ Restore di-rollback karena {$result['failedQueries']} query gagal.";
-                return redirect()->route('pengaturan.backup.index')
+                return redirect()->route('pengaturan.backup.restore')
                     ->with('warning', $message)
                     ->with('restore_errors', $result['errors']);
             }
 
-            if ($result['failedQueries'] > 0) {
-                $message .= " | ⚠️ {$result['failedQueries']} query gagal.";
-                return redirect()->route('pengaturan.backup.index')
-                    ->with('warning', $message)
-                    ->with('restore_errors', $result['errors']);
+            // Restore committed — session is destroyed (sessions table was dropped & recreated)
+            // Re-login the user to create a new session
+            $user = User::where('username', $username)->first();
+            if ($user) {
+                Auth::login($user);
+
+                if ($result['failedQueries'] > 0) {
+                    $message .= " | ⚠️ {$result['failedQueries']} query gagal.";
+                    session()->flash('warning', $message);
+                    return redirect()->route('pengaturan.backup.restore')
+                        ->with('restore_errors', $result['errors']);
+                }
+
+                $message .= " | ✅ Semua berhasil.";
+                session()->flash('success', $message);
+                return redirect()->route('pengaturan.backup.restore');
             }
 
-            $message .= " | ✅ Semua berhasil.";
-            return redirect()->route('pengaturan.backup.index')->with('success', $message);
+            // Fallback: user not found in restored database
+            return redirect()->route('login', ['restore' => 'success']);
 
         } catch (\Throwable $e) {
             \Log::error('Restore failed: ' . $e->getMessage());
