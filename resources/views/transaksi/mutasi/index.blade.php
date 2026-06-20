@@ -98,9 +98,9 @@
         </table>
     </div>
 
-    @if($data->hasPages())
+    @if($mutasi->hasPages())
     <div class="border-t border-gray-200 dark:border-gray-800">
-        {{ $data->links('vendor.pagination.tailadmin') }}
+        {{ $mutasi->links('vendor.pagination.tailadmin') }}
     </div>
     @endif
 </div>
