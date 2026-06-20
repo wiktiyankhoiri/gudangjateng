@@ -73,6 +73,7 @@ class DashboardController extends Controller
             ->leftJoin('users', 'users.id', '=', 'barang_keluar.sales_id')
             ->withCount('details')
             ->orderBy('barang_keluar.tanggal', 'DESC')
+            ->orderBy('barang_keluar.id', 'DESC')
             ->limit(5)
             ->get()
             ->map(function ($item) {
@@ -88,6 +89,7 @@ class DashboardController extends Controller
             ->leftJoin('toko', 'toko.id', '=', 'barang_masuk.toko_id')
             ->withCount('details')
             ->orderBy('barang_masuk.tanggal', 'DESC')
+            ->orderBy('barang_masuk.id', 'DESC')
             ->limit(5)
             ->get()
             ->map(function ($item) {
@@ -125,6 +127,7 @@ class DashboardController extends Controller
             ->where('barang_masuk.tipe', 'retur')
             ->groupBy('barang_masuk.id', 'barang_masuk.no_surat', 'barang_masuk.tanggal', 'barang_masuk.tipe', 'barang_masuk.keterangan', 'toko.nama_toko')
             ->orderBy('barang_masuk.tanggal', 'DESC')
+            ->orderBy('barang_masuk.id', 'DESC')
             ->limit(5)
             ->get()
             ->toArray();
@@ -135,7 +138,7 @@ class DashboardController extends Controller
                 md.tipe, md.qty
             FROM mutasi_detail md
             LEFT JOIN mutasi ON mutasi.id = md.mutasi_id
-            ORDER BY mutasi.tanggal DESC
+            ORDER BY mutasi.tanggal DESC, mutasi.id DESC
             LIMIT 10
         ");
         $mutasiList = [];
