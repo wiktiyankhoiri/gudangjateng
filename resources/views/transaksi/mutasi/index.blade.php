@@ -97,5 +97,11 @@
             </tbody>
         </table>
     </div>
+
+    @if($data->hasPages())
+    <div class="border-t border-gray-200 dark:border-gray-800">
+        {{ $data->links('vendor.pagination.tailadmin') }}
+    </div>
+    @endif
 </div>
 @endsection
