@@ -12,6 +12,7 @@
         @include('dashboard.manager')
         @break
     @case('sales')
+    @case('staff')
         @include('dashboard.sales')
         @break
     @case('audit')

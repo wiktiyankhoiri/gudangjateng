@@ -57,6 +57,7 @@
                             <option value="audit" {{ old('role', $data->role) === 'audit' ? 'selected' : '' }}>Audit</option>
                             <option value="manager" {{ old('role', $data->role) === 'manager' ? 'selected' : '' }}>Manager</option>
                             <option value="super_admin" {{ old('role', $data->role) === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                            <option value="staff" {{ old('role', $data->role) === 'staff' ? 'selected' : '' }}>Staff</option>
                         </select>
                         <span class="pointer-events-none absolute top-1/2 right-4 z-30 -translate-y-1/2 text-gray-500 dark:text-gray-400">
                             <svg class="stroke-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

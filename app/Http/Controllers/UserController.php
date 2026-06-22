@@ -47,7 +47,7 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users,username',
             'email' => 'nullable|email|max:255|unique:users,email',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,sales,audit,manager,super_admin',
+            'role' => 'required|in:admin,sales,audit,manager,super_admin,staff',
         ]);
 
         $user = User::create([
@@ -83,7 +83,7 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users,username,' . $user->id,
             'email' => 'nullable|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|min:6',
-            'role' => 'required|in:admin,sales,audit,manager,super_admin',
+            'role' => 'required|in:admin,sales,audit,manager,super_admin,staff',
         ]);
 
         $data = [

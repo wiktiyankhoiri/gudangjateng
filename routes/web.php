@@ -80,7 +80,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Detail Transaksi - broader access
-    Route::prefix('transaksi')->name('transaksi.')->middleware('role:admin,audit,manager,sales')->group(function () {
+    Route::prefix('transaksi')->name('transaksi.')->middleware('role:admin,audit,manager,sales,staff')->group(function () {
         Route::get('barangmasuk/detail/{barangMasuk}', [BarangMasukController::class, 'detail'])->name('barangmasuk.detail');
         Route::get('barangkeluar/detail/{barangKeluar}', [BarangKeluarController::class, 'detail'])->name('barangkeluar.detail');
     });
@@ -111,7 +111,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // ===================== LAPORAN =====================
-    Route::prefix('laporan')->name('laporan.')->middleware('role:admin,audit,manager,sales')->group(function () {
+    Route::prefix('laporan')->name('laporan.')->middleware('role:admin,audit,manager,sales,staff')->group(function () {
         Route::get('salesstok', [LaporanSalesStokController::class, 'index'])->name('salesstok.index');
         Route::get('salesstok/export', [LaporanSalesStokController::class, 'export'])->name('salesstok.export');
         Route::get('barangmasuk', [LaporanBarangMasukController::class, 'index'])->name('barangmasuk.index');
@@ -155,7 +155,7 @@ Route::middleware('auth')->group(function () {
 });
 
     // ===================== SEARCH =====================
-    Route::get('search', [SearchController::class, 'index'])->name('search')->middleware('role:admin,audit,manager,sales');
+    Route::get('search', [SearchController::class, 'index'])->name('search')->middleware('role:admin,audit,manager,sales,staff');
 
     // ===================== NOTIFIKASI =====================
     Route::get('notifications/list', [NotificationController::class, 'list'])->name('notifications.list');

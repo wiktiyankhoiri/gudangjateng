@@ -3,7 +3,7 @@ $role = auth()->user()->role;
 $isAdmin = $role === 'admin';
 $isAudit = $role === 'audit';
 $isManager = $role === 'manager';
-$isSales = $role === 'sales';
+$isSales = $role === 'sales' || $role === 'staff';
 $isSuperAdmin = $role === 'super_admin';
 
 $showMaster = $isAdmin || $isSuperAdmin;

@@ -41,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('sales', function ($user) {
-            return in_array($user->role, ['admin', 'sales', 'super_admin']);
+            return in_array($user->role, ['admin', 'sales', 'super_admin', 'staff']);
         });
     }
 }
