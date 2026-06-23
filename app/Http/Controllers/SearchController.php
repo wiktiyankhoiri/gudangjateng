@@ -16,13 +16,14 @@ class SearchController extends Controller
 
         $keyword = trim($keyword);
         $escLow = strtolower($keyword);
+        $searchTerm = str_replace(' ', '', $escLow);
 
         $barang = DB::table('barang as b')
             ->select('b.id', 'b.kode_barang', 'b.nama_barang', 's.stok_baik', 's.stok_rusak')
             ->leftJoin('stok as s', 's.barang_id', '=', 'b.id')
-            ->where(function ($q) use ($escLow) {
-                $q->whereRaw('REPLACE(b.kode_barang, \' \', \'\') ILIKE ?', ['%' . $escLow . '%'])
-                  ->orWhereRaw('REPLACE(b.nama_barang, \' \', \'\') ILIKE ?', ['%' . $escLow . '%']);
+            ->where(function ($q) use ($searchTerm) {
+                $q->whereRaw('REPLACE(b.kode_barang, \' \', \'\') ILIKE ?', ['%' . $searchTerm . '%'])
+                  ->orWhereRaw('REPLACE(b.nama_barang, \' \', \'\') ILIKE ?', ['%' . $searchTerm . '%']);
             })
             ->orderBy('b.kode_barang', 'ASC')
             ->limit(5)
@@ -46,7 +47,7 @@ class SearchController extends Controller
 
         // Mutasi: hanya untuk role yang memiliki akses (exclude sales)
         $role = auth()->user()->role;
-        if (!in_array($role, ['sales'], true)) {
+        if (!in_array($role, ['sales', 'staff'], true)) {
             $mutasi = DB::table('mutasi as m')
                 ->selectRaw("m.id, m.no_mutasi as no_surat, m.tanggal, 'mutasi' as tipe")
                 ->whereRaw('m.no_mutasi ILIKE ?', ['%' . $escLow . '%'])
