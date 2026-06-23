@@ -1,0 +1,19 @@
+{
+  "appId": "com.gudangjateng.app",
+  "appName": "GudangJateng",
+  "webDir": "public",
+  "server": {
+    "url": "https://gudangjateng.web.id",
+    "allowNavigation": [
+      "gudangjateng.web.id"
+    ]
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": null,
+      "keystorePassword": null,
+      "keystoreAlias": null,
+      "keystoreAliasPassword": null
+    }
+  }
+}
