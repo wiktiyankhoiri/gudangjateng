@@ -25,14 +25,23 @@ class BarangController extends Controller
         $query = Barang::query();
 
         if ($keyword !== '') {
-            $search = strtoupper($keyword);
+            $search = str_replace(' ', '', strtoupper($keyword));
             $query->where(function ($q) use ($search) {
-                $q->where('kode_barang', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%");
+                $q->where(DB::raw("REPLACE(kode_barang, ' ', '')"), 'like', "%{$search}%")
+                  ->orWhere(DB::raw("REPLACE(nama_barang, ' ', '')"), 'like', "%{$search}%");
             });
         }
 
         $barang = $query->orderBy('id', 'ASC')->paginate(50);
+
+        // AJAX: return partial table untuk live search
+        if ($request->ajax()) {
+            $html = view('masterdata.barang._table', compact('barang'))->render();
+            return response()->json([
+                'html' => $html,
+                'q' => $keyword,
+            ]);
+        }
 
         return view('masterdata.barang.index', [
             'title' => 'Data Barang',

@@ -19,14 +19,19 @@ class PabrikController extends Controller
         $query = Pabrik::query();
 
         if ($keyword !== '') {
-            $search = strtoupper($keyword);
+            $search = str_replace(' ', '', strtoupper($keyword));
             $query->where(function ($q) use ($search) {
-                $q->where('kode_pabrik', 'like', "%{$search}%")
-                  ->orWhere('nama_pabrik', 'like', "%{$search}%");
+                $q->where(DB::raw("REPLACE(kode_pabrik, ' ', '')"), 'like', "%{$search}%")
+                  ->orWhere(DB::raw("REPLACE(nama_pabrik, ' ', '')"), 'like', "%{$search}%");
             });
         }
 
         $pabrik = $query->orderBy('id', 'ASC')->paginate(50);
+
+        if ($request->ajax()) {
+            $html = view('masterdata.pabrik._table', compact('pabrik'))->render();
+            return response()->json(['html' => $html, 'q' => $keyword]);
+        }
 
         return view('masterdata.pabrik.index', [
             'title' => 'Data Pabrik',

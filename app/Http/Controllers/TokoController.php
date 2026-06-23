@@ -19,14 +19,19 @@ class TokoController extends Controller
         $query = Toko::query();
 
         if ($keyword !== '') {
-            $search = strtoupper($keyword);
+            $search = str_replace(' ', '', strtoupper($keyword));
             $query->where(function ($q) use ($search) {
-                $q->where('kode_toko', 'like', "%{$search}%")
-                  ->orWhere('nama_toko', 'like', "%{$search}%");
+                $q->where(DB::raw("REPLACE(kode_toko, ' ', '')"), 'like', "%{$search}%")
+                  ->orWhere(DB::raw("REPLACE(nama_toko, ' ', '')"), 'like', "%{$search}%");
             });
         }
 
         $toko = $query->orderBy('id', 'ASC')->paginate(50);
+
+        if ($request->ajax()) {
+            $html = view('masterdata.toko._table', compact('toko'))->render();
+            return response()->json(['html' => $html, 'q' => $keyword]);
+        }
 
         return view('masterdata.toko.index', [
             'title' => 'Data Toko',

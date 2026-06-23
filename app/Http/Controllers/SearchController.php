@@ -21,8 +21,8 @@ class SearchController extends Controller
             ->select('b.id', 'b.kode_barang', 'b.nama_barang', 's.stok_baik', 's.stok_rusak')
             ->leftJoin('stok as s', 's.barang_id', '=', 'b.id')
             ->where(function ($q) use ($escLow) {
-                $q->whereRaw('b.kode_barang ILIKE ?', ['%' . $escLow . '%'])
-                  ->orWhereRaw('b.nama_barang ILIKE ?', ['%' . $escLow . '%']);
+                $q->whereRaw('REPLACE(b.kode_barang, \' \', \'\') ILIKE ?', ['%' . $escLow . '%'])
+                  ->orWhereRaw('REPLACE(b.nama_barang, \' \', \'\') ILIKE ?', ['%' . $escLow . '%']);
             })
             ->orderBy('b.kode_barang', 'ASC')
             ->limit(5)
