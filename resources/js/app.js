@@ -24,3 +24,11 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js');
     });
 }
+
+// Capacitor APK session extension header
+if (navigator.userAgent.includes('Capacitor')) {
+    // Send header so middleware can detect Capacitor requests
+    window.axios?.defaults?.headers?.common && (
+        window.axios.defaults.headers.common['X-Capacitor'] = 'true'
+    );
+}
