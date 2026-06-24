@@ -25,10 +25,27 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Capacitor APK session extension header
-if (navigator.userAgent.includes('Capacitor')) {
-    // Send header so middleware can detect Capacitor requests
-    window.axios?.defaults?.headers?.common && (
-        window.axios.defaults.headers.common['X-Capacitor'] = 'true'
-    );
+// Capacitor APK session extension — set cookie biar semua request terdeteksi
+(function() {
+    if (!document.cookie.includes('capacitor_app=1')) {
+        // Cek User-Agent Capacitor
+        if (navigator.userAgent.includes('Capacitor') || navigator.userAgent.includes('capacitor')) {
+            document.cookie = 'capacitor_app=1; path=/; max-age=2592000'; // 30 hari
+        }
+
+        // Juga cek apakah running di WebView Android (capacitor ga selalu nambahin "Capacitor" di UA)
+        if (/Android/i.test(navigator.userAgent) && !window.__PWA_ENABLED__) {
+            // Cek apakah window.Capacitor ada (object yg disuntik Capacitor runtime)
+            if (window.Capacitor || window.capacitor || navigator.userAgent.includes('wv')) {
+                document.cookie = 'capacitor_app=1; path=/; max-age=2592000';
+            }
+        }
+    }
+})();
+
+// Juga set header X-Capacitor buat request axios/fetch sebagai backup
+if (window.axios?.defaults?.headers?.common) {
+    if (document.cookie.includes('capacitor_app=1') || navigator.userAgent.includes('Capacitor')) {
+        window.axios.defaults.headers.common['X-Capacitor'] = 'true';
+    }
 }
