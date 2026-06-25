@@ -154,31 +154,29 @@
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Mutasi Terbaru</h3>
                 <a href="{{ route('laporan.mutasi.index') }}" class="text-theme-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400">Lihat Semua</a>
             </div>
-            <div class="p-5">
-                <div class="flex flex-col gap-4">
-                    @if(!empty($adminMutasiTerbaruList))
-                        @foreach(array_slice($adminMutasiTerbaruList, 0, 5) as $row)
-                        <div class="flex items-center justify-between border-b border-gray-100 pb-3 dark:border-gray-800 last:border-b-0 last:pb-0">
-                            <div class="flex items-center gap-3 min-w-0">
-                                @php $isGreen = ($row['total_selisih'] ?? 0) >= 0; @endphp
-                                <div class="flex size-10 items-center justify-center rounded-full {{ $isGreen ? 'bg-success-50 dark:bg-success-500/15' : 'bg-error-50 dark:bg-error-500/15' }}">
-                                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12L8 6L12 14L16 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="{{ $isGreen ? 'text-success-500 dark:text-success-500' : 'text-error-500 dark:text-error-500' }}"/></svg>
-                                </div>
-                                <div class="min-w-0">
-                                    <a href="{{ route('transaksi.mutasi.detail', $row['mutasi_id'] ?? 0) }}" class="text-sm font-semibold text-brand-500 hover:text-brand-600 dark:text-brand-400 truncate">{{ esc($row['no_mutasi'] ?? '-') }}</a>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ esc($row['tipe'] ?? '') }}{!! !empty($row['alasan']) ? ' &bull; ' . esc($row['alasan']) : '' !!}</p>
-                                </div>
-                            </div>
-                            @php $selisih = $row['total_selisih'] ?? 0; @endphp
-                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium {{ $selisih < 0 ? 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500' : 'bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-500' }}">
-                                {{ ($selisih >= 0 ? '+' : '') . number_format($selisih) }}
-                            </span>
-                        </div>
-                        @endforeach
-                    @else
-                        <div class="text-center py-6"><p class="text-sm text-gray-500 dark:text-gray-400">Belum ada mutasi</p></div>
-                    @endif
-                </div>
+            <div class="w-full overflow-x-auto">
+                <table class="min-w-full">
+                    <thead>
+                        <tr class="border-y border-gray-100 dark:border-gray-800">
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">No. Mutasi</p></th>
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Tipe</p></th>
+                            <th class="py-3 px-5 text-right"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Item</p></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        @if(!empty($adminMutasiTerbaruList))
+                            @foreach(array_slice($adminMutasiTerbaruList, 0, 5) as $row)
+                                <tr>
+                                    <td class="py-3 px-5"><a href="{{ route('transaksi.mutasi.detail', $row['mutasi_id'] ?? 0) }}" class="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium text-theme-sm">{{ esc($row['no_mutasi'] ?? '-') }}</a></td>
+                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ esc($row['tipe'] ?? '') }}</p></td>
+                                    <td class="py-3 px-5 text-right"><span class="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-theme-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-500">{{ number_format($row['total_item']) }}</span></td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr><td colspan="3" class="py-8 text-center text-gray-500 dark:text-gray-400">Belum ada mutasi</td></tr>
+                        @endif
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

@@ -135,28 +135,27 @@ class DashboardController extends Controller
         // Admin: Mutasi Terbaru
         $adminMutasiTerbaruList = DB::select("
             SELECT mutasi.id as mutasi_id, mutasi.no_mutasi, mutasi.keterangan as alasan,
-                md.tipe, md.qty
+                MIN(md.tipe) as tipe, COUNT(md.id) as total_item
             FROM mutasi_detail md
             LEFT JOIN mutasi ON mutasi.id = md.mutasi_id
+            GROUP BY mutasi.id, mutasi.no_mutasi, mutasi.keterangan
             ORDER BY mutasi.tanggal DESC, mutasi.id DESC
             LIMIT 10
         ");
         $mutasiList = [];
         foreach ($adminMutasiTerbaruList as $row) {
-            $tipe = strtolower(trim($row->tipe ?? ''));
-            $qty = (int) ($row->qty ?? 0);
             $mutasiList[] = [
                 'mutasi_id' => $row->mutasi_id,
                 'no_mutasi' => $row->no_mutasi ?? '-',
                 'alasan' => $row->alasan ?? '-',
-                'tipe' => $tipe === 'rusak_ke_baik' ? 'Rusak → Baik' : 'Baik → Rusak',
-                'total_selisih' => $tipe === 'rusak_ke_baik' ? $qty : ($qty * -1),
+                'tipe' => strtolower(trim($row->tipe ?? '')) === 'rusak_ke_baik' ? 'Rusak → Baik' : 'Baik → Rusak',
+                'total_item' => (int) ($row->total_item ?? 0),
             ];
         }
 
         // Audit: Mutasi Terbaru
         $auditPenyesuaianTerbaru = array_slice($mutasiList, 0, 5);
-        $totalSelisihItem = array_sum(array_column($mutasiList, 'total_selisih'));
+        $totalSelisihItem = array_sum(array_column($mutasiList, 'total_item'));
 
         $stokChart = DB::table('stok as s')
             ->select('barang.nama_barang', 's.stok_baik', 's.stok_rusak')
