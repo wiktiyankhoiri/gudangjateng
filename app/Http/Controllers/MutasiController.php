@@ -25,11 +25,15 @@ class MutasiController extends Controller
         $data = Mutasi::with('details')->orderBy('id', 'DESC')->paginate(50);
 
         foreach ($data as $m) {
-            $summary = [];
+            $grouped = [];
             $totalQty = 0;
             foreach ($m->details as $d) {
-                $summary[] = $d->tipe . ':' . $d->qty;
+                $grouped[$d->tipe] = ($grouped[$d->tipe] ?? 0) + (int)$d->qty;
                 $totalQty += (int)$d->qty;
+            }
+            $summary = [];
+            foreach ($grouped as $tipe => $qty) {
+                $summary[] = $tipe . ':' . $qty;
             }
             $m->detail_summary = implode(', ', $summary);
             $m->total_qty = $totalQty;
@@ -58,7 +62,7 @@ class MutasiController extends Controller
             'title' => 'Tambah Mutasi',
             'barang' => Barang::orderBy('nama_barang', 'ASC')->get(),
             'stokPerBarang' => $stokPerBarang,
-            'noMutasi' => Mutasi::generateNoMutasi(),
+            'noMutasi' => Mutasi::generateNoMutasi('M'),
         ]);
     }
 
@@ -74,8 +78,15 @@ class MutasiController extends Controller
                 ->with('error', 'Detail mutasi wajib diisi');
         }
 
+        if (empty($post['tipe']) || !in_array($post['tipe'], ['baik_ke_rusak', 'rusak_ke_baik'], true)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Tipe mutasi tidak valid');
+        }
+
         try {
-            $group = $this->buildGroup($post);
+            $group = $this->buildGroup($post, $post['tipe']);
         } catch (\Exception $e) {
             return redirect()
                 ->back()
@@ -87,7 +98,7 @@ class MutasiController extends Controller
         DB::beginTransaction();
 
         try {
-            $noMutasi = Mutasi::generateNoMutasi();
+            $noMutasi = Mutasi::generateNoMutasi('M');
 
             $mutasi = Mutasi::create([
                 'no_mutasi' => $noMutasi,
@@ -206,8 +217,15 @@ class MutasiController extends Controller
                 ->with('error', 'Detail mutasi wajib diisi');
         }
 
+        if (empty($post['tipe']) || !in_array($post['tipe'], ['baik_ke_rusak', 'rusak_ke_baik'], true)) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Tipe mutasi tidak valid');
+        }
+
         try {
-            $group = $this->buildGroup($post);
+            $group = $this->buildGroup($post, $post['tipe']);
         } catch (\Exception $e) {
             return redirect()
                 ->back()
@@ -397,7 +415,7 @@ class MutasiController extends Controller
         return $stokPerBarang;
     }
 
-    protected function buildGroup(array $post): array
+    protected function buildGroup(array $post, string $tipe): array
     {
         $group = [];
         $seenBarang = [];
@@ -405,13 +423,9 @@ class MutasiController extends Controller
             $barangId = (int) $barangId;
             if ($barangId <= 0) continue;
 
-            $tipe = $post['tipe'][$i] ?? '';
             $qty = (int) ($post['qty'][$i] ?? 0);
 
             if ($qty <= 0) throw new BusinessException('Jumlah harus lebih dari 0');
-            if (!in_array($tipe, ['baik_ke_rusak', 'rusak_ke_baik'], true)) {
-                throw new BusinessException('Tipe mutasi tidak valid');
-            }
 
             if (isset($seenBarang[$barangId])) {
                 throw new BusinessException('Barang duplikat tidak diperbolehkan dalam satu mutasi');

@@ -29,20 +29,23 @@ class Mutasi extends Model
 
     /**
      * Generate nomor mutasi otomatis.
-     * Format: DAT{ddMMyyyy}-{nnn} (urutan global, tidak pernah reset)
+     * Format: {prefix}{Y}{m}{nnn} — reset per tahun
+     * Contoh: M202606001 (Mutasi, Juni 2026, no 1)
      */
-    public static function generateNoMutasi(): string
+    public static function generateNoMutasi(string $prefix = 'M'): string
     {
-        $today = now()->format('dmY');
+        $year = now()->format('Y');
+        $month = now()->format('m');
 
-        // Ambil nomor urut tertinggi dari mutasi terakhir
-        $last = static::orderBy('id', 'desc')->first();
+        $last = static::where('no_mutasi', 'LIKE', $prefix . $year . '%')
+            ->orderBy('id', 'desc')
+            ->first();
 
         $nextSeq = 1;
-        if ($last && preg_match('/-(\d+)$/', $last->no_mutasi, $matches)) {
+        if ($last && preg_match('/' . $prefix . $year . '\d{2}(\d+)$/', $last->no_mutasi, $matches)) {
             $nextSeq = (int) $matches[1] + 1;
         }
 
-        return 'DAT' . $today . '-' . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+        return $prefix . $year . $month . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
     }
 }

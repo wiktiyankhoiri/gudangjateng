@@ -2,11 +2,20 @@
 
 @section('content')
 
+@if ($errors->any())
+<div class="mb-4 rounded-lg border-l-4 border-l-error-500 bg-error-50 p-4 dark:bg-error-500/15">
+    <ul class="text-sm text-error-800 dark:text-error-200 list-disc list-inside">
+        @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
 
     <form data-protect-submit="true" data-confirm-message="Pastikan data sudah sesuai dengan nota fisik. Lanjutkan update?" data-confirm-ok="Ya, Update" method="post"
-          action="{{ route('transaksi.mutasi.update', $mutasi->id) }}"
-          id="formMutasi">
+          action="{{ route('transaksi.mutasi.update', $mutasi->id) }}">
 
         @csrf @method('PUT')
 
@@ -54,8 +63,12 @@
             </div>
             @endif
 
-            <!-- ROW 1: NO MUTASI + TANGGAL + KETERANGAN -->
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            @php
+                $currentTipe = old('tipe', $detail->first()->tipe ?? '');
+            @endphp
+
+            <!-- ROW 1: NO MUTASI + TANGGAL + TIPE + KETERANGAN -->
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
 
                 <!-- NO MUTASI -->
                 <div>
@@ -80,6 +93,17 @@
                     @error('tanggal')<p class="mt-1 text-xs text-error-500">{{ $message }}</p>@enderror
                 </div>
 
+                <!-- TIPE -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Tipe Mutasi</label>
+                    <select name="tipe" id="tipeMutasi"
+                            class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" required>
+                        <option value="">-- Pilih Tipe --</option>
+                        <option value="baik_ke_rusak" {{ $currentTipe === 'baik_ke_rusak' ? 'selected' : '' }}>Baik &rarr; Rusak</option>
+                        <option value="rusak_ke_baik" {{ $currentTipe === 'rusak_ke_baik' ? 'selected' : '' }}>Rusak &rarr; Baik</option>
+                    </select>
+                </div>
+
                 <!-- KETERANGAN -->
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Keterangan</label>
@@ -92,48 +116,68 @@
 
             <hr class="border-gray-200 dark:border-gray-800 my-6">
 
-            <!-- DETAIL -->
-            <div class="flex items-center justify-between mb-4">
-                <h5 class="text-lg font-semibold text-gray-800 dark:text-white/90">Detail Barang</h5>
-                <button type="button" id="btnAddRow"
-                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600">
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                    Tambah Barang
+            <!-- INPUT BARANG (inline) -->
+            <h5 class="text-lg font-semibold text-gray-800 dark:text-white/90 mb-3">Tambah Barang</h5>
+            <div class="flex flex-col sm:flex-row gap-2 items-end mb-6">
+                <div class="flex-1 w-full">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Barang</label>
+                    <select id="inputBarang" class="h-10 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800">
+                        <option value="">-- Pilih Barang --</option>
+                        @foreach($barang as $b)
+                            <option value="{{ $b->id }}" data-kode="{{ $b->kode_barang }}" data-nama="{{ $b->nama_barang }}">{{ $b->kode_barang }} - {{ $b->nama_barang }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="w-full sm:w-24">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">Jml</label>
+                    <input type="number" id="inputQty" value="1" min="1"
+                           class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-sm text-center text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                </div>
+                <div class="w-full sm:w-32">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">Stok</label>
+                    <div id="stokInfo" class="h-10 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 px-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">--</div>
+                </div>
+                <button type="button" id="btnTambah"
+                        class="h-10 inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600 whitespace-nowrap">
+                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Tambah
                 </button>
             </div>
 
-            <div id="bodyBarang" class="space-y-2">
-                @foreach($detail as $d)
-                <div class="flex flex-col sm:flex-row gap-2 items-start p-3 border border-gray-200 rounded-lg dark:border-gray-800 row-barang">
-                    <div class="w-full" style="flex:1 1 0%; min-width:200px;">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Barang</label>
-                        <select name="barang_id[]" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 barangSelect" required>
-                            <option value="">-- Pilih Barang --</option>
-                            @foreach($barang as $b)
-                                <option value="{{ $b->id }}" {{ $b->id == $d->barang_id ? 'selected' : '' }}>{{ $b->kode_barang }} - {{ $b->nama_barang }}</option>
-                            @endforeach
-                        </select>
-                        <div class="stok-info mt-1 text-xs hidden"></div>
-                    </div>
-                    <div class="w-full sm:w-32">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Tipe Mutasi</label>
-                        <select name="tipe[]" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" required>
-                            <option value="">-- Pilih Tipe --</option>
-                            <option value="baik_ke_rusak" {{ $d->tipe == 'baik_ke_rusak' ? 'selected' : '' }}>Baik &rarr; Rusak</option>
-                            <option value="rusak_ke_baik" {{ $d->tipe == 'rusak_ke_baik' ? 'selected' : '' }}>Rusak &rarr; Baik</option>
-                        </select>
-                    </div>
-                    <div class="w-full sm:w-16">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Qty</label>
-                        <input type="number" name="qty[]" class="dark:bg-dark-900 shadow-theme-xs h-11 w-full rounded-lg border border-gray-300 bg-transparent bg-none px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" min="1" value="{{ $d->qty }}" required>
-                    </div>
-                    <div class="w-full sm:w-20 flex justify-center" style="padding-top:28px;flex-shrink:0;">
-                        <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-error-50 p-2 text-error-600 hover:bg-error-100 dark:bg-error-500/15 dark:text-error-400 btnRemoveRow">
-                            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 2.5C7.5 2.08579 7.83579 1.75 8.25 1.75H11.75C12.1642 1.75 12.5 2.08579 12.5 2.5V3.5H6.25V2.5H7.5ZM4.75 4.5V3.5C4.75 2.25736 5.75736 1.25 7 1.25H13C14.2426 1.25 15.25 2.25736 15.25 3.5V4.5H16.5C17.1904 4.5 17.75 5.05964 17.75 5.75C17.75 6.44036 17.1904 7 16.5 7H16.1273L15.2865 16.2885C15.1399 17.8235 13.8455 19 12.3043 19H7.6957C6.15448 19 4.86011 17.8235 4.71346 16.2885L3.87273 7H3.5C2.80964 7 2.25 6.44036 2.25 5.75C2.25 5.05964 2.80964 4.5 3.5 4.5H4.75ZM6.21817 7L7.04185 16.1443C7.07708 16.5095 7.39145 16.75 7.6957 16.75H12.3043C12.6086 16.75 12.9229 16.5095 12.9582 16.1443L13.7818 7H6.21817Z" fill="currentColor"/></svg>
-                        </button>
-                    </div>
-                </div>
-                @endforeach
+            <hr class="border-gray-200 dark:border-gray-800 my-4">
+
+            <!-- DAFTAR BARANG (tabel) -->
+            <div class="overflow-x-auto" id="listWrapper">
+                <table class="table-sticky min-w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                            <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-28 whitespace-nowrap">Kode</th>
+                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap">Nama Barang</th>
+                            <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-24 whitespace-nowrap">Qty</th>
+                            <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-14 whitespace-nowrap">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="daftarBarang" class="divide-y divide-gray-100 dark:divide-gray-800">
+                        @php $barangLookup = $barang->keyBy('id'); @endphp
+                        @foreach($detail as $d)
+                        @php $b = $barangLookup->get($d->barang_id); @endphp
+                        <tr class="row-barang">
+                            <td class="px-5 py-3 text-center text-sm font-medium text-gray-800 dark:text-white/90">{{ $b ? $b->kode_barang : '#' . $d->barang_id }}</td>
+                            <td class="px-5 py-3 text-sm text-gray-800 dark:text-white/90">{{ $b ? $b->nama_barang : 'Barang #' . $d->barang_id }}</td>
+                            <td class="px-1 py-3">
+                                <input type="number" name="qty[]" value="{{ $d->qty }}" min="1"
+                                       class="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 py-1.5 text-sm text-center text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" required>
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                <input type="hidden" name="barang_id[]" value="{{ $d->barang_id }}">
+                                <button type="button" class="btnHapus inline-flex items-center justify-center rounded-lg bg-error-50 p-2 text-error-600 hover:bg-error-100 dark:bg-error-500/15 dark:text-error-400">
+                                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 2.5C7.5 2.08579 7.83579 1.75 8.25 1.75H11.75C12.1642 1.75 12.5 2.08579 12.5 2.5V3.5H6.25V2.5H7.5ZM4.75 4.5V3.5C4.75 2.25736 5.75736 1.25 7 1.25H13C14.2426 1.25 15.25 2.25736 15.25 3.5V4.5H16.5C17.1904 4.5 17.75 5.05964 17.75 5.75C17.75 6.44036 17.1904 7 16.5 7H16.1273L15.2865 16.2885C15.1399 17.8235 13.8455 19 12.3043 19H7.6957C6.15448 19 4.86011 17.8235 4.71346 16.2885L3.87273 7H3.5C2.80964 7 2.25 6.44036 2.25 5.75C2.25 5.05964 2.80964 4.5 3.5 4.5H4.75ZM6.21817 7L7.04185 16.1443C7.07708 16.5095 7.39145 16.75 7.6957 16.75H12.3043C12.6086 16.75 12.9229 16.5095 12.9582 16.1443L13.7818 7H6.21817Z" fill="currentColor"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
 
         </div>
@@ -159,94 +203,119 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    // =========================================
-    // INIT TOM SELECT (existing rows)
-    // =========================================
-    document.querySelectorAll('.barangSelect').forEach(function(el) {
-        new TomSelect(el, { maxItems:1, searchField:['text','value'], dropdownParent:'body', plugins:{clear_button:{title:'Hapus pilihan'}} });
-    });
+    var daftarBarang = document.getElementById('daftarBarang');
+    var listWrapper = document.getElementById('listWrapper');
+    var inputBarang = document.getElementById('inputBarang');
+    var inputQty = document.getElementById('inputQty');
+    var stokInfo = document.getElementById('stokInfo');
 
-    // =========================================
-    // TAMBAH ROW
-    // =========================================
-    document.getElementById('btnAddRow').addEventListener('click', function() {
-
-        let row = `
-        <div class="flex flex-col sm:flex-row gap-2 items-start p-3 border border-gray-200 rounded-lg dark:border-gray-800 row-barang">
-            <div class="w-full" style="flex:1 1 0%; min-width:200px;">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Barang</label>
-                <select name="barang_id[]" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 barangSelect" required>
-                    <option value="">-- Pilih Barang --</option>
-                    @foreach($barang as $b)
-                        <option value="{{ $b->id }}">{{ $b->kode_barang }} - {{ $b->nama_barang }}</option>
-                    @endforeach
-                </select>
-                <div class="stok-info mt-1 text-xs hidden"></div>
-            </div>
-            <div class="w-full sm:w-32">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Tipe Mutasi</label>
-                <select name="tipe[]" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" required>
-                    <option value="">-- Pilih Tipe --</option>
-                    <option value="baik_ke_rusak">Baik &rarr; Rusak</option>
-                    <option value="rusak_ke_baik">Rusak &rarr; Baik</option>
-                </select>
-            </div>
-            <div class="w-full sm:w-16">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1.5">Qty</label>
-                <input type="number" name="qty[]" class="dark:bg-dark-900 shadow-theme-xs h-11 w-full rounded-lg border border-gray-300 bg-transparent bg-none px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" min="1" value="1" required>
-            </div>
-            <div class="w-full sm:w-20 flex justify-center" style="padding-top:28px;flex-shrink:0;">
-                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-error-50 p-2 text-error-600 hover:bg-error-100 dark:bg-error-500/15 dark:text-error-400 btnRemoveRow">
-                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 2.5C7.5 2.08579 7.83579 1.75 8.25 1.75H11.75C12.1642 1.75 12.5 2.08579 12.5 2.5V3.5H6.25V2.5H7.5ZM4.75 4.5V3.5C4.75 2.25736 5.75736 1.25 7 1.25H13C14.2426 1.25 15.25 2.25736 15.25 3.5V4.5H16.5C17.1904 4.5 17.75 5.05964 17.75 5.75C17.75 6.44036 17.1904 7 16.5 7H16.1273L15.2865 16.2885C15.1399 17.8235 13.8455 19 12.3043 19H7.6957C6.15448 19 4.86011 17.8235 4.71346 16.2885L3.87273 7H3.5C2.80964 7 2.25 6.44036 2.25 5.75C2.25 5.05964 2.80964 4.5 3.5 4.5H4.75ZM6.21817 7L7.04185 16.1443C7.07708 16.5095 7.39145 16.75 7.6957 16.75H12.3043C12.6086 16.75 12.9229 16.5095 12.9582 16.1443L13.7818 7H6.21817Z" fill="currentColor"/></svg>
-                </button>
-            </div>
-        </div>
-        `;
-
-        document.getElementById('bodyBarang').insertAdjacentHTML('beforeend', row);
-
-        document.querySelectorAll('#bodyBarang > div:last-child .barangSelect').forEach(function(el) {
-            new TomSelect(el, { maxItems:1, searchField:['text','value'], dropdownParent:'body', plugins:{clear_button:{title:'Hapus pilihan'}} });
-        });
-
-    });
-
-    // =========================================
-    // HAPUS ROW (delegation)
-    // =========================================
-    document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.btnRemoveRow');
-        if (!btn) return;
-
-        if (document.querySelectorAll('#bodyBarang > div').length > 1) {
-            btn.closest('.row-barang').remove();
-        } else {
-            showSystemMessage('warning', 'Minimal harus ada 1 item mutasi.');
+    // Stock data lookup (load all stok agar info muncul untuk barang baru)
+    @php
+        $allStokData = [];
+        $semuaStok = \App\Models\Stok::all();
+        foreach ($semuaStok as $s) {
+            $allStokData[$s->barang_id] = [
+                'stok_baik' => (int)$s->stok_baik,
+                'stok_rusak' => (int)$s->stok_rusak,
+            ];
         }
-
-    });
-
-    // =========================================
-    // STOK INFO DISPLAY
-    // =========================================
-    var stokData = @json($stokPerBarang ?? []);
+    @endphp
+    var stokData = @json($allStokData);
     var stokIndex = {};
     Object.keys(stokData).forEach(function(id) { stokIndex[id] = stokData[id]; });
 
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('barangSelect')) {
-            var row = e.target.closest('.row-barang');
-            var info = row ? row.querySelector('.stok-info') : null;
-            if (!info) return;
-            var stok = stokIndex[e.target.value];
-            if (stok) {
-                info.innerHTML = 'Stok: baik <strong>' + stok.stok_baik + '</strong> | rusak <strong>' + stok.stok_rusak + '</strong>';
-                info.classList.remove('hidden');
-            } else {
-                info.innerHTML = 'Stok: <span class="text-warning-500">belum ada</span>';
-                info.classList.remove('hidden');
+    // Init TomSelect
+    if (typeof TomSelect !== 'undefined') {
+        new TomSelect(inputBarang, {
+            maxItems: 1,
+            searchField: ['text', 'value'],
+            dropdownParent: 'body',
+            plugins: { clear_button: { title: 'Hapus pilihan' } },
+            onChange: function(value) {
+                var stok = stokIndex[value];
+                if (stok) {
+                    stokInfo.innerHTML = 'Baik: <span style="color:#2563eb;font-weight:600">' + (stok.stok_baik || 0) + '</span> &nbsp; Rusak: <span style="color:#ea580c;font-weight:600">' + (stok.stok_rusak || 0) + '</span>';
+                } else {
+                    stokInfo.innerHTML = '<span style="color:#f59e0b">Belum ada stok</span>';
+                }
+            },
+            onReady: function() {
+                var c = this.control;
+                if (c) {
+                    c.style.minHeight = '40px';
+                    c.style.height = '40px';
+                    c.style.display = 'flex';
+                    c.style.alignItems = 'center';
+                    c.style.paddingTop = '0';
+                    c.style.paddingBottom = '0';
+                }
             }
+        });
+    }
+
+    // =========================================
+    // TAMBAH BARANG
+    // =========================================
+    document.getElementById('btnTambah').addEventListener('click', function() {
+        var opt = inputBarang.options[inputBarang.selectedIndex];
+        if (!opt || !opt.value) {
+            showSystemMessage('warning', 'Pilih barang terlebih dahulu.');
+            return;
         }
+
+        var kode = opt.getAttribute('data-kode');
+        var nama = opt.getAttribute('data-nama');
+        var qty = parseInt(inputQty.value) || 1;
+
+        if (qty < 1) {
+            showSystemMessage('warning', 'Jumlah minimal 1.');
+            return;
+        }
+
+        var row = `<tr class="row-barang">
+            <td class="px-5 py-3 text-center text-sm font-medium text-gray-800 dark:text-white/90">${kode}</td>
+            <td class="px-5 py-3 text-sm text-gray-800 dark:text-white/90">${nama}</td>
+            <td class="px-5 py-3 text-center text-sm text-gray-800 dark:text-white/90">${qty}</td>
+            <td class="px-5 py-3 text-center">
+                <input type="hidden" name="barang_id[]" value="${opt.value}">
+                <input type="hidden" name="qty[]" value="${qty}">
+                <button type="button" class="btnHapus inline-flex items-center justify-center rounded-lg bg-error-50 p-2 text-error-600 hover:bg-error-100 dark:bg-error-500/15 dark:text-error-400">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 2.5C7.5 2.08579 7.83579 1.75 8.25 1.75H11.75C12.1642 1.75 12.5 2.08579 12.5 2.5V3.5H6.25V2.5H7.5ZM4.75 4.5V3.5C4.75 2.25736 5.75736 1.25 7 1.25H13C14.2426 1.25 15.25 2.25736 15.25 3.5V4.5H16.5C17.1904 4.5 17.75 5.05964 17.75 5.75C17.75 6.44036 17.1904 7 16.5 7H16.1273L15.2865 16.2885C15.1399 17.8235 13.8455 19 12.3043 19H7.6957C6.15448 19 4.86011 17.8235 4.71346 16.2885L3.87273 7H3.5C2.80964 7 2.25 6.44036 2.25 5.75C2.25 5.05964 2.80964 4.5 3.5 4.5H4.75ZM6.21817 7L7.04185 16.1443C7.07708 16.5095 7.39145 16.75 7.6957 16.75H12.3043C12.6086 16.75 12.9229 16.5095 12.9582 16.1443L13.7818 7H6.21817Z" fill="currentColor"/></svg>
+                </button>
+            </td>
+        </tr>`;
+
+        daftarBarang.insertAdjacentHTML('beforeend', row);
+
+        // Reset input
+        inputQty.value = 1;
+        if (inputBarang.tomselect) {
+            inputBarang.tomselect.clear();
+        } else {
+            inputBarang.value = '';
+        }
+        stokInfo.innerHTML = '--';
+    });
+
+    // Enter key langsung tambah
+    inputQty.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btnTambah').click();
+        }
+    });
+
+    // =========================================
+    // HAPUS ROW
+    // =========================================
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btnHapus');
+        if (!btn) return;
+        if (daftarBarang.querySelectorAll('tr').length <= 1) {
+            showSystemMessage('warning', 'Minimal harus ada 1 barang.');
+            return;
+        }
+        btn.closest('tr').remove();
     });
 
 });
