@@ -17,7 +17,7 @@
         </form>
         <div class="flex gap-2">
             <a href="{{ route('transaksi.mutasi.create', ['tipe' => 'kondisi']) }}"
-               class="inline-flex items-center gap-2 rounded-lg bg-warning-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-warning-600"
+               class="inline-flex items-center gap-2 rounded-lg bg-warning-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-warning-600">
 
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -25,7 +25,7 @@
                 Mutasi Kondisi
             </a>
             <a href="{{ route('transaksi.mutasi.create', ['tipe' => 'kanvas']) }}"
-               class="inline-flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-purple-600"
+               class="inline-flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-purple-600">
  
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
