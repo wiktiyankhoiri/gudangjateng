@@ -21,7 +21,11 @@
                 <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Sales</p>
                 <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $barangKeluar->sales->nama ?? '-' }}</p>
             </div>
-            <div class="md:col-span-2">
+            <div>
+                <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Sumber</p>
+                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $barangKeluar->sumber === 'sales' ? 'Sales (Kanvas)' : 'Gudang' }}</p>
+            </div>
+            <div class="md:col-span-1">
                 <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Keterangan</p>
                 <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $barangKeluar->keterangan ?: '-' }}</p>
             </div>

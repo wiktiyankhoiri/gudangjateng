@@ -21,9 +21,10 @@ class DashboardController extends Controller
         // KPI Global
         $totalBarang = Barang::count();
 
-        $stok = Stok::selectRaw('COALESCE(SUM(stok_baik), 0) as stok_baik, COALESCE(SUM(stok_rusak), 0) as stok_rusak')->first();
+        $stok = Stok::selectRaw('COALESCE(SUM(stok_baik), 0) as stok_baik, COALESCE(SUM(stok_rusak), 0) as stok_rusak, COALESCE(SUM(stok_sales), 0) as stok_sales')->first();
         $totalStokBaik = (int) ($stok->stok_baik ?? 0);
         $totalStokRusak = (int) ($stok->stok_rusak ?? 0);
+        $totalStokSales = (int) ($stok->stok_sales ?? 0);
 
         $totalBarangMasuk = BarangMasuk::count();
         $totalBarangKeluar = BarangKeluar::count();
@@ -148,7 +149,12 @@ class DashboardController extends Controller
                 'mutasi_id' => $row->mutasi_id,
                 'no_mutasi' => $row->no_mutasi ?? '-',
                 'alasan' => $row->alasan ?? '-',
-                'tipe' => strtolower(trim($row->tipe ?? '')) === 'rusak_ke_baik' ? 'Rusak → Baik' : 'Baik → Rusak',
+                'tipe' => match (strtolower(trim($row->tipe ?? ''))) {
+                    'rusak_ke_baik' => 'Rusak → Baik',
+                    'baik_ke_sales' => 'Baik → Sales',
+                    'sales_ke_baik' => 'Sales → Baik',
+                    default => 'Baik → Rusak',
+                },
                 'total_item' => (int) ($row->total_item ?? 0),
             ];
         }
@@ -232,7 +238,8 @@ class DashboardController extends Controller
             'keluarBulanLalu' => $keluarBulanLalu,
             'persenMasuk' => $persenMasuk,
             'persenKeluar' => $persenKeluar,
-            'totalStok' => $totalStokBaik + $totalStokRusak,
+            'totalStok' => $totalStokBaik + $totalStokRusak + $totalStokSales,
+            'totalStokSales' => $totalStokSales,
             'barangMasukHariIni' => $barangMasukHariIni,
             'barangKeluarHariIni' => $barangKeluarHariIni,
             'mutasiHariIni' => $mutasiHariIni,

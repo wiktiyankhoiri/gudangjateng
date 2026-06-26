@@ -15,12 +15,24 @@
             </div>
             <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600">Cari</button>
         </form>
-        <a href="{{ route('transaksi.mutasi.create') }}" class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            Tambah Mutasi
-        </a>
+        <div class="flex gap-2">
+            <a href="{{ route('transaksi.mutasi.create', ['tipe' => 'kondisi']) }}"
+               class="inline-flex items-center gap-2 rounded-lg bg-warning-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-warning-600"
+
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Mutasi Kondisi
+            </a>
+            <a href="{{ route('transaksi.mutasi.create', ['tipe' => 'kanvas']) }}"
+               class="inline-flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-purple-600"
+ 
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Mutasi Kanvas
+            </a>
+        </div>
     </div>
 
     <div class="overflow-x-auto"><table class="table-sticky min-w-full">
@@ -49,8 +61,18 @@
                             @foreach(explode(', ', $m->detail_summary) as $det)
                                 @php
                                     list($tipe, $qty) = explode(':', $det);
-                                    $label = $tipe === 'baik_ke_rusak' ? 'Baik→Rusak' : 'Rusak→Baik';
-                                    $color = $tipe === 'baik_ke_rusak' ? 'bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-warning-400' : 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400';
+                                    $label = match ($tipe) {
+                                        'baik_ke_rusak' => 'Baik→Rusak',
+                                        'rusak_ke_baik' => 'Rusak→Baik',
+                                        'baik_ke_sales' => 'Baik→Sales',
+                                        'sales_ke_baik' => 'Sales→Baik',
+                                    };
+                                    $color = match ($tipe) {
+                                        'baik_ke_rusak' => 'bg-warning-50 text-warning-600 dark:bg-warning-500/15 dark:text-warning-400',
+                                        'rusak_ke_baik' => 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400',
+                                        'baik_ke_sales' => 'bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-400',
+                                        'sales_ke_baik' => 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-400',
+                                    };
                                 @endphp
                                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $color }} mr-1 mb-1">
                                     {{ $label }} : {{ $qty }}

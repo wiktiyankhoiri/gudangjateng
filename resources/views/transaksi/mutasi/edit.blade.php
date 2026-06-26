@@ -41,6 +41,18 @@
                                 $nama = $barangNama[$d->barang_id] ?? ('Barang #' . $d->barang_id);
                                 $peringatanItems[] = sprintf('%s (mutasi rusak→baik %d, stok rusak saat ini %d, selisih -%d)', $nama, $d->qty, $stok['stok_rusak'], $selisih);
                             endif;
+                            if ($d->tipe == 'baik_ke_sales' && (int)$stok['stok_baik'] < (int)$d->qty):
+                                $adaPeringatan = true;
+                                $selisih = (int)$d->qty - (int)$stok['stok_baik'];
+                                $nama = $barangNama[$d->barang_id] ?? ('Barang #' . $d->barang_id);
+                                $peringatanItems[] = sprintf('%s (mutasi baik→sales %d, stok baik saat ini %d, selisih -%d)', $nama, $d->qty, $stok['stok_baik'], $selisih);
+                            endif;
+                            if ($d->tipe == 'sales_ke_baik' && (int)$stok['stok_sales'] < (int)$d->qty):
+                                $adaPeringatan = true;
+                                $selisih = (int)$d->qty - (int)$stok['stok_sales'];
+                                $nama = $barangNama[$d->barang_id] ?? ('Barang #' . $d->barang_id);
+                                $peringatanItems[] = sprintf('%s (mutasi sales→baik %d, stok sales saat ini %d, selisih -%d)', $nama, $d->qty, $stok['stok_sales'], $selisih);
+                            endif;
                         endif;
                     endforeach;
                 endif;
@@ -65,6 +77,7 @@
 
             @php
                 $currentTipe = old('tipe', $detail->first()->tipe ?? '');
+                $isKanvas = in_array($currentTipe, ['baik_ke_sales', 'sales_ke_baik']);
             @endphp
 
             <!-- ROW 1: NO MUTASI + TANGGAL + TIPE + KETERANGAN -->
@@ -99,12 +112,42 @@
                     <select name="tipe" id="tipeMutasi"
                             class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" required>
                         <option value="">-- Pilih Tipe --</option>
-                        <option value="baik_ke_rusak" {{ $currentTipe === 'baik_ke_rusak' ? 'selected' : '' }}>Baik &rarr; Rusak</option>
-                        <option value="rusak_ke_baik" {{ $currentTipe === 'rusak_ke_baik' ? 'selected' : '' }}>Rusak &rarr; Baik</option>
+                        @if($isKanvas)
+                            <option value="baik_ke_sales" {{ $currentTipe === 'baik_ke_sales' ? 'selected' : '' }}>Baik &rarr; Sales</option>
+                            <option value="sales_ke_baik" {{ $currentTipe === 'sales_ke_baik' ? 'selected' : '' }}>Sales &rarr; Baik</option>
+                        @else
+                            <option value="baik_ke_rusak" {{ $currentTipe === 'baik_ke_rusak' ? 'selected' : '' }}>Baik &rarr; Rusak</option>
+                            <option value="rusak_ke_baik" {{ $currentTipe === 'rusak_ke_baik' ? 'selected' : '' }}>Rusak &rarr; Baik</option>
+                        @endif
                     </select>
                 </div>
 
-                <!-- KETERANGAN -->
+                @if($isKanvas)
+                <!-- SALES -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Sales <span class="text-error-500">*</span></label>
+                    <select name="sales_id" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 select2" required>
+                        <option value="">-- Pilih Sales --</option>
+                        @foreach($salesList as $s)
+                            <option value="{{ $s->id }}" {{ old('sales_id', $mutasi->sales_id) == $s->id ? 'selected' : '' }}>{{ $s->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @else
+                <!-- KETERANGAN (kondisi) -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Keterangan</label>
+                    <textarea name="keterangan"
+                              class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 uppercase"
+                              rows="2"
+                              oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">{{ old('keterangan', $mutasi->keterangan) }}</textarea>
+                </div>
+                @endif
+            </div>
+
+            @if($isKanvas)
+            <!-- KETERANGAN (kanvas) -->
+            <div class="grid grid-cols-1 gap-4 mt-4">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Keterangan</label>
                     <textarea name="keterangan"
@@ -113,6 +156,7 @@
                               oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">{{ old('keterangan', $mutasi->keterangan) }}</textarea>
                 </div>
             </div>
+            @endif
 
             <hr class="border-gray-200 dark:border-gray-800 my-6">
 
@@ -133,8 +177,8 @@
                     <input type="number" id="inputQty" value="1" min="1"
                            class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-sm text-center text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                 </div>
-                <div class="w-full sm:w-32">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">Stok</label>
+                <div class="w-full sm:max-w-[220px] sm:w-auto">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">Stok Info</label>
                     <div id="stokInfo" class="h-10 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 px-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">--</div>
                 </div>
                 <button type="button" id="btnTambah"
@@ -217,6 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
             $allStokData[$s->barang_id] = [
                 'stok_baik' => (int)$s->stok_baik,
                 'stok_rusak' => (int)$s->stok_rusak,
+                'stok_sales' => (int)$s->stok_sales,
             ];
         }
     @endphp
@@ -234,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
             onChange: function(value) {
                 var stok = stokIndex[value];
                 if (stok) {
-                    stokInfo.innerHTML = 'Baik: <span style="color:#2563eb;font-weight:600">' + (stok.stok_baik || 0) + '</span> &nbsp; Rusak: <span style="color:#ea580c;font-weight:600">' + (stok.stok_rusak || 0) + '</span>';
+                    stokInfo.innerHTML = 'Baik: <span style="color:#2563eb;font-weight:600">' + (stok.stok_baik || 0) + '</span> &nbsp; Rusak: <span style="color:#ea580c;font-weight:600">' + (stok.stok_rusak || 0) + '</span> &nbsp; Sales: <span style="color:#8b5cf6;font-weight:600">' + (stok.stok_sales || 0) + '</span>';
                 } else {
                     stokInfo.innerHTML = '<span style="color:#f59e0b">Belum ada stok</span>';
                 }

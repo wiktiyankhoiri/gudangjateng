@@ -96,7 +96,7 @@
         <hr class="my-6 border-gray-200 dark:border-gray-800">
 
         <!-- TOTAL SELISIH -->
-        <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
                 <p class="text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Total Selisih Baik</p>
                 <p class="mt-1 text-xl font-bold {{ $totalSelisihBaik >= 0 ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400' }}">
@@ -109,6 +109,12 @@
                     {{ $totalSelisihRusak >= 0 ? '+' : '' }}{{ number_format($totalSelisihRusak) }}
                 </p>
             </div>
+            <div class="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
+                <p class="text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Total Selisih Sales</p>
+                <p class="mt-1 text-xl font-bold {{ $totalSelisihSales >= 0 ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400' }}">
+                    {{ $totalSelisihSales >= 0 ? '+' : '' }}{{ number_format($totalSelisihSales) }}
+                </p>
+            </div>
         </div>
 
         <!-- TABLE DETAIL -->
@@ -116,12 +122,11 @@
             <table class="min-w-full">
                 <thead>
                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KODE</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">BARANG</th>
-                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">STOK SISTEM</th>
-                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">STOK FISIK</th>
-                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">SELISIH</th>
-                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KETERANGAN</th>
+                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 min-w-[60px]">KODE</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">NAMA BARANG</th>
+                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap min-w-[100px]">STOK SISTEM</th>
+                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap min-w-[110px]">STOK FISIK</th>
+                        <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap min-w-[100px]">SELISIH</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -133,18 +138,27 @@
                             </span>
                         </td>
                         <td class="px-3 py-3 text-sm text-gray-800 dark:text-white/90">{{ esc($d->nama_barang) }}</td>
-                        <td class="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                            {{ number_format($d->stok_sistem_baik) }} baik / {{ number_format($d->stok_sistem_rusak) }} rusak
+                        <td class="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            <span class="text-brand-600 dark:text-brand-400">Baik</span> : <strong class="text-brand-600 dark:text-brand-400">{{ number_format($d->stok_sistem_baik) }}</strong>
+                            <span class="text-gray-300 dark:text-gray-600 mx-0.5">/</span>
+                            <span class="text-error-600 dark:text-error-400">Rusak</span> : <strong class="text-error-600 dark:text-error-400">{{ number_format($d->stok_sistem_rusak) }}</strong>
+                            <span class="text-gray-300 dark:text-gray-600 mx-0.5">/</span>
+                            <span class="text-purple-600 dark:text-purple-400">Sales</span> : <strong class="text-purple-600 dark:text-purple-400">{{ number_format($d->stok_sistem_sales ?? 0) }}</strong>
                         </td>
-                        <td class="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                            {{ number_format($d->stok_fisik_baik) }} baik / {{ number_format($d->stok_fisik_rusak) }} rusak
+                        <td class="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            <span class="text-brand-600 dark:text-brand-400">Baik</span> : <strong class="text-brand-600 dark:text-brand-400">{{ number_format($d->stok_fisik_baik) }}</strong>
+                            <span class="text-gray-300 dark:text-gray-600 mx-0.5">/</span>
+                            <span class="text-error-600 dark:text-error-400">Rusak</span> : <strong class="text-error-600 dark:text-error-400">{{ number_format($d->stok_fisik_rusak) }}</strong>
+                            <span class="text-gray-300 dark:text-gray-600 mx-0.5">/</span>
+                            <span class="text-purple-600 dark:text-purple-400">Sales</span> : <strong class="text-purple-600 dark:text-purple-400">{{ number_format($d->stok_fisik_sales ?? 0) }}</strong>
                         </td>
                         <td class="px-3 py-3 text-center">
                             @php
                                 $selBaik = (int) $d->selisih_baik;
                                 $selRusak = (int) $d->selisih_rusak;
+                                $selSales = (int) ($d->selisih_sales ?? 0);
                             @endphp
-                            @if($selBaik === 0 && $selRusak === 0)
+                            @if($selBaik === 0 && $selRusak === 0 && $selSales === 0)
                                 <span class="text-sm text-gray-400">-</span>
                             @else
                                 <span class="text-sm font-medium">
@@ -153,7 +167,7 @@
                                             {{ $selBaik > 0 ? '+' : '' }}{{ $selBaik }} baik
                                         </span>
                                     @endif
-                                    @if($selBaik !== 0 && $selRusak !== 0)
+                                    @if($selBaik !== 0 && ($selRusak !== 0 || $selSales !== 0))
                                         <span class="text-gray-400"> / </span>
                                     @endif
                                     @if($selRusak !== 0)
@@ -161,16 +175,21 @@
                                             {{ $selRusak > 0 ? '+' : '' }}{{ $selRusak }} rusak
                                         </span>
                                     @endif
+                                    @if($selRusak !== 0 && $selSales !== 0)
+                                        <span class="text-gray-400"> / </span>
+                                    @endif
+                                    @if($selSales !== 0)
+                                        <span class="{{ $selSales > 0 ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400' }}">
+                                            {{ $selSales > 0 ? '+' : '' }}{{ $selSales }} sales
+                                        </span>
+                                    @endif
                                 </span>
                             @endif
-                        </td>
-                        <td class="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                            {{ $d->keterangan ?: '-' }}
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-5 py-12 text-center">
+                        <td colspan="5" class="px-5 py-12 text-center">
                             <p class="text-sm text-gray-500 dark:text-gray-400">Tidak ada detail barang</p>
                         </td>
                     </tr>

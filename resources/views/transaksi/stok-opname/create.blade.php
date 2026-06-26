@@ -54,45 +54,57 @@
                 <table class="min-w-full">
                     <thead>
                         <tr class="border-b border-gray-100 dark:border-gray-800">
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KODE</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">NAMA BARANG</th>
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">STOK SISTEM</th>
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">STOK FISIK</th>
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">SELISIH</th>
+                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KODE</th>
+                            <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">NAMA BARANG</th>
+                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap">STOK SISTEM</th>
+                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap">STOK FISIK</th>
+                            <th class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap">SELISIH</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800" id="detailContainer">
                         @forelse($barang as $i => $b)
-                        @php $s = $stokAll[$b->id] ?? null; $stokBaik = $s['stok_baik'] ?? 0; $stokRusak = $s['stok_rusak'] ?? 0; @endphp
+                        @php $s = $stokAll[$b->id] ?? null; $stokBaik = $s['stok_baik'] ?? 0; $stokRusak = $s['stok_rusak'] ?? 0; $stokSales = $s['stok_sales'] ?? 0; @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <td class="px-3 py-3 text-center">
-                                <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                            <td class="px-2 py-3 text-center">
+                                <span class="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-sm font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
                                     {{ $b->kode_barang }}
                                 </span>
                                 <input type="hidden" name="barang_id[]" value="{{ $b->id }}">
                             </td>
-                            <td class="px-3 py-3 text-sm text-gray-800 dark:text-white/90">{{ $b->nama_barang }}</td>
-                            <td class="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                                <span class="stok-sistem-label" data-baik="{{ $stokBaik }}" data-rusak="{{ $stokRusak }}">
-                                    {{ $stokBaik }} baik / {{ $stokRusak }} rusak
-                                </span>
+                            <td class="px-2 py-3 text-sm text-gray-800 dark:text-white/90">{{ $b->nama_barang }}</td>
+                            <td class="px-1 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                                <div class="stok-sistem-label flex justify-center gap-0.5 text-sm" data-baik="{{ $stokBaik }}" data-rusak="{{ $stokRusak }}" data-sales="{{ $stokSales }}">
+                                    <span class="whitespace-nowrap text-brand-600 dark:text-brand-400">Baik : <strong class="ml-0.5">{{ $stokBaik }}</strong></span>
+                                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                                    <span class="whitespace-nowrap text-error-600 dark:text-error-400">Rusak : <strong class="ml-0.5">{{ $stokRusak }}</strong></span>
+                                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                                    <span class="whitespace-nowrap text-purple-600 dark:text-purple-400">Sales : <strong class="ml-0.5">{{ $stokSales }}</strong></span>
+                                </div>
                                 <input type="hidden" name="stok_sistem_baik[]" value="{{ $stokBaik }}">
                                 <input type="hidden" name="stok_sistem_rusak[]" value="{{ $stokRusak }}">
+                                <input type="hidden" name="stok_sistem_sales[]" value="{{ $stokSales }}">
                             </td>
-                            <td class="px-3 py-3 text-center">
-                                <div class="flex items-center justify-center gap-1">
-                                    <input type="number" name="stok_fisik_baik[]" min="0" value="{{ old('stok_fisik_baik.' . $i, '') }}" placeholder="Baik"
-                                           class="stok-fisik-input h-9 w-20 rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-2 py-1 text-sm text-gray-800 shadow-theme-xs text-center focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                                           data-index="{{ $i }}">
-                                    <input type="number" name="stok_fisik_rusak[]" min="0" value="{{ old('stok_fisik_rusak.' . $i, '') }}" placeholder="Rusak"
-                                           class="stok-fisik-input h-9 w-20 rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-2 py-1 text-sm text-gray-800 shadow-theme-xs text-center focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-                                           data-index="{{ $i }}">
-                                    <input type="text" name="keterangan[]" placeholder="Ket" value="{{ old('keterangan.' . $i, '') }}"
-                                           class="h-9 w-20 rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-2 py-1 text-xs text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                            <td class="px-1 py-3 text-center">
+                                <div class="flex justify-center gap-px">
+                                    <div>
+                                        <input type="number" name="stok_fisik_baik[]" min="0" value="{{ old('stok_fisik_baik.' . $i, '') }}" placeholder="Baik"
+                                                class="stok-fisik-input h-7 w-16 rounded border dark:bg-dark-900 border-gray-300 bg-transparent px-0.5 py-0.5 text-sm text-gray-800 text-center focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                               data-index="{{ $i }}">
+                                    </div>
+                                    <div>
+                                        <input type="number" name="stok_fisik_rusak[]" min="0" value="{{ old('stok_fisik_rusak.' . $i, '') }}" placeholder="Rusak"
+                                               class="stok-fisik-input h-7 w-16 rounded border dark:bg-dark-900 border-gray-300 bg-transparent px-0.5 py-0.5 text-sm text-gray-800 text-center focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                               data-index="{{ $i }}">
+                                    </div>
+                                    <div>
+                                        <input type="number" name="stok_fisik_sales[]" min="0" value="{{ old('stok_fisik_sales.' . $i, '') }}" placeholder="Sales"
+                                               class="stok-fisik-input h-7 w-16 rounded border dark:bg-dark-900 border-gray-300 bg-transparent px-0.5 py-0.5 text-sm text-gray-800 text-center focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                               data-index="{{ $i }}">
+                                    </div>
                                 </div>
                             </td>
-                            <td class="px-3 py-3 text-center">
-                                <span class="selisih-label text-sm font-medium" data-index="{{ $i }}">0</span>
+                            <td class="px-2 py-3 text-center">
+                                <span class="selisih-label text-sm font-medium text-gray-500 dark:text-gray-400" data-index="{{ $i }}">0/0/0</span>
                             </td>
                         </tr>
                         @empty
@@ -138,32 +150,33 @@ document.addEventListener('DOMContentLoaded', function() {
             var stokLabel = tr.querySelector('.stok-sistem-label');
             var stokBaik = parseInt(stokLabel.getAttribute('data-baik')) || 0;
             var stokRusak = parseInt(stokLabel.getAttribute('data-rusak')) || 0;
+            var stokSales = parseInt(stokLabel.getAttribute('data-sales')) || 0;
 
             var fisikBaik = parseInt(tr.querySelector('input[name="stok_fisik_baik[]"]').value) || 0;
             var fisikRusak = parseInt(tr.querySelector('input[name="stok_fisik_rusak[]"]').value) || 0;
+            var fisikSales = parseInt(tr.querySelector('input[name="stok_fisik_sales[]"]').value) || 0;
 
             var selisihBaik = fisikBaik - stokBaik;
             var selisihRusak = fisikRusak - stokRusak;
+            var selisihSales = fisikSales - stokSales;
 
             var selisihLabel = tr.querySelector('.selisih-label');
-            var teks = '';
-            if (selisihBaik !== 0 || selisihRusak !== 0) {
-                teks = (selisihBaik !== 0 ? (selisihBaik > 0 ? '+' : '') + selisihBaik + ' baik' : '') +
-                       (selisihBaik !== 0 && selisihRusak !== 0 ? ' / ' : '') +
-                       (selisihRusak !== 0 ? (selisihRusak > 0 ? '+' : '') + selisihRusak + ' rusak' : '');
-            } else {
-                teks = '0';
-            }
+            var parts = [];
+            if (selisihBaik !== 0) parts.push((selisihBaik > 0 ? '+' : '') + selisihBaik + ' baik');
+            if (selisihRusak !== 0) parts.push((selisihRusak > 0 ? '+' : '') + selisihRusak + ' rusak');
+            if (selisihSales !== 0) parts.push((selisihSales > 0 ? '+' : '') + selisihSales + ' sales');
+
+            var teks = parts.length > 0 ? parts.join(' / ') : '0';
             selisihLabel.textContent = teks;
 
             // Warna selisih
             selisihLabel.className = 'selisih-label text-sm font-medium';
-            if (selisihBaik !== 0 || selisihRusak !== 0) {
-                if (selisihBaik < 0 || selisihRusak < 0) {
-                    selisihLabel.classList.add('text-error-600', 'dark:text-error-400');
-                } else {
-                    selisihLabel.classList.add('text-success-600', 'dark:text-success-400');
-                }
+            var adaNegatif = selisihBaik < 0 || selisihRusak < 0 || selisihSales < 0;
+            var adaPositif = selisihBaik > 0 || selisihRusak > 0 || selisihSales > 0;
+            if (adaNegatif) {
+                selisihLabel.classList.add('text-error-600', 'dark:text-error-400');
+            } else if (adaPositif) {
+                selisihLabel.classList.add('text-success-600', 'dark:text-success-400');
             } else {
                 selisihLabel.classList.add('text-gray-500', 'dark:text-gray-400');
             }

@@ -6,6 +6,7 @@ use App\Models\Mutasi;
 use App\Models\MutasiDetail;
 use App\Models\Barang;
 use App\Models\Stok;
+use App\Models\User;
 use App\Services\StokService;
 use App\Models\Notification;
 use App\Exceptions\BusinessException;
@@ -45,24 +46,41 @@ class MutasiController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->requireAdmin();
 
+        $tipe = $request->query('tipe', 'kondisi');
+
+        if ($tipe === 'kanvas') {
+            $tipeOptions = ['baik_ke_sales', 'sales_ke_baik'];
+            $noMutasi = date('Ym');
+            $title = 'Tambah Mutasi Kanvas';
+            $salesList = User::where('role', 'sales')->orderBy('nama', 'ASC')->get();
+        } else {
+            $tipeOptions = ['baik_ke_rusak', 'rusak_ke_baik'];
+            $noMutasi = Mutasi::generateNoMutasi('M');
+            $title = 'Tambah Mutasi Kondisi';
+            $salesList = collect();
+        }
+
         $stokPerBarang = [];
-        $allStok = Stok::all();
-        foreach ($allStok as $s) {
+        foreach (Stok::all() as $s) {
             $stokPerBarang[$s->barang_id] = [
                 'stok_baik' => (int) $s->stok_baik,
                 'stok_rusak' => (int) $s->stok_rusak,
+                'stok_sales' => (int) $s->stok_sales,
             ];
         }
 
         return view('transaksi.mutasi.create', [
-            'title' => 'Tambah Mutasi',
+            'title' => $title,
             'barang' => Barang::orderBy('nama_barang', 'ASC')->get(),
             'stokPerBarang' => $stokPerBarang,
-            'noMutasi' => Mutasi::generateNoMutasi('M'),
+            'noMutasi' => $noMutasi,
+            'tipeOptions' => $tipeOptions,
+            'tipe' => $tipe,
+            'salesList' => $salesList,
         ]);
     }
 
@@ -78,11 +96,36 @@ class MutasiController extends Controller
                 ->with('error', 'Detail mutasi wajib diisi');
         }
 
-        if (empty($post['tipe']) || !in_array($post['tipe'], ['baik_ke_rusak', 'rusak_ke_baik'], true)) {
+        $validTipes = ['baik_ke_rusak', 'rusak_ke_baik', 'baik_ke_sales', 'sales_ke_baik'];
+        if (empty($post['tipe']) || !in_array($post['tipe'], $validTipes, true)) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->with('error', 'Tipe mutasi tidak valid');
+        }
+
+        $prefix = in_array($post['tipe'], ['baik_ke_sales', 'sales_ke_baik']) ? 'K' : 'M';
+
+        if (in_array($post['tipe'], ['baik_ke_sales', 'sales_ke_baik']) && empty($post['sales_id'])) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Sales wajib dipilih');
+        }
+
+        if ($prefix === 'K') {
+            $noMutasi = strtoupper(trim($post['no_mutasi'] ?? ''));
+            if (empty($noMutasi)) {
+                return redirect()->back()->withInput()->with('error', 'No mutasi wajib diisi');
+            }
+            if (str_contains($noMutasi, '.') || !preg_match('/^\d{10,12}$/', $noMutasi)) {
+                return redirect()->back()->withInput()->with('error', 'Format no mutasi tidak valid, gunakan format YYYYMMXXXX (minimal 10 digit)');
+            }
+            if (Mutasi::where('no_mutasi', $noMutasi)->exists()) {
+                return redirect()->back()->withInput()->with('error', 'No mutasi sudah digunakan');
+            }
+        } else {
+            $noMutasi = Mutasi::generateNoMutasi('M');
         }
 
         try {
@@ -98,12 +141,11 @@ class MutasiController extends Controller
         DB::beginTransaction();
 
         try {
-            $noMutasi = Mutasi::generateNoMutasi('M');
-
             $mutasi = Mutasi::create([
                 'no_mutasi' => $noMutasi,
                 'tanggal' => $post['tanggal'],
                 'keterangan' => $post['keterangan'],
+                'sales_id' => !empty($post['sales_id']) ? $post['sales_id'] : null,
             ]);
 
             $mutasiId = $mutasi->id;
@@ -115,11 +157,7 @@ class MutasiController extends Controller
                     throw new BusinessException('Stok barang tidak ditemukan');
                 }
 
-                if (
-                    $g['tipe'] === 'baik_ke_rusak'
-                    &&
-                    $g['qty'] > (int)$stok['stok_baik']
-                ) {
+                if ($g['tipe'] === 'baik_ke_rusak' && $g['qty'] > (int)$stok['stok_baik']) {
                     $barang = Barang::find($g['barang_id']);
                     throw new BusinessException(
                         'Jumlah yang Anda masukkan melebihi stok baik: '
@@ -127,14 +165,26 @@ class MutasiController extends Controller
                     );
                 }
 
-                if (
-                    $g['tipe'] === 'rusak_ke_baik'
-                    &&
-                    $g['qty'] > (int)$stok['stok_rusak']
-                ) {
+                if ($g['tipe'] === 'rusak_ke_baik' && $g['qty'] > (int)$stok['stok_rusak']) {
                     $barang = Barang::find($g['barang_id']);
                     throw new BusinessException(
                         'Jumlah yang Anda masukkan melebihi stok rusak: '
+                        . ($barang ? $barang->nama_barang : 'Barang')
+                    );
+                }
+
+                if ($g['tipe'] === 'baik_ke_sales' && $g['qty'] > (int)$stok['stok_baik']) {
+                    $barang = Barang::find($g['barang_id']);
+                    throw new BusinessException(
+                        'Jumlah yang Anda masukkan melebihi stok baik: '
+                        . ($barang ? $barang->nama_barang : 'Barang')
+                    );
+                }
+
+                if ($g['tipe'] === 'sales_ke_baik' && $g['qty'] > (int)$stok['stok_sales']) {
+                    $barang = Barang::find($g['barang_id']);
+                    throw new BusinessException(
+                        'Jumlah yang Anda masukkan melebihi stok sales: '
                         . ($barang ? $barang->nama_barang : 'Barang')
                     );
                 }
@@ -146,11 +196,11 @@ class MutasiController extends Controller
                     'qty' => $g['qty'],
                 ]);
 
-                $this->stokService->mutasiStok(
-                    $g['barang_id'],
-                    $g['tipe'],
-                    $g['qty']
-                );
+                if (in_array($g['tipe'], ['baik_ke_sales', 'sales_ke_baik'])) {
+                    $this->stokService->mutasiStokSales($g['tipe'], $g['barang_id'], $g['qty']);
+                } else {
+                    $this->stokService->mutasiStok($g['barang_id'], $g['tipe'], $g['qty']);
+                }
             }
 
             DB::commit();
@@ -163,7 +213,12 @@ class MutasiController extends Controller
             $barangNames = [];
             foreach ($group as $g) {
                 $b = Barang::find($g['barang_id']);
-                $tipeLabel = $g['tipe'] === 'baik_ke_rusak' ? 'Baik→Rusak' : 'Rusak→Baik';
+                $tipeLabel = match ($g['tipe']) {
+                    'baik_ke_rusak' => 'Baik→Rusak',
+                    'rusak_ke_baik' => 'Rusak→Baik',
+                    'baik_ke_sales' => 'Baik→Sales',
+                    'sales_ke_baik' => 'Sales→Baik',
+                };
                 $barangNames[] = ($b ? $b->nama_barang : 'Barang') . ' (' . $tipeLabel . ' ' . $g['qty'] . ')';
             }
             $message = $noMutasi . ': ' . implode(', ', $barangNames);
@@ -202,6 +257,7 @@ class MutasiController extends Controller
             'detail' => $detail,
             'stokPerBarang' => $this->getStokPerBarang($detail),
             'barang' => Barang::orderBy('nama_barang', 'ASC')->get(),
+            'salesList' => User::where('role', 'sales')->orderBy('nama', 'ASC')->get(),
         ]);
     }
 
@@ -217,11 +273,19 @@ class MutasiController extends Controller
                 ->with('error', 'Detail mutasi wajib diisi');
         }
 
-        if (empty($post['tipe']) || !in_array($post['tipe'], ['baik_ke_rusak', 'rusak_ke_baik'], true)) {
+        $validTipes = ['baik_ke_rusak', 'rusak_ke_baik', 'baik_ke_sales', 'sales_ke_baik'];
+        if (empty($post['tipe']) || !in_array($post['tipe'], $validTipes, true)) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->with('error', 'Tipe mutasi tidak valid');
+        }
+
+        if (in_array($post['tipe'], ['baik_ke_sales', 'sales_ke_baik'], true) && empty($post['sales_id'])) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Sales wajib dipilih');
         }
 
         try {
@@ -239,11 +303,11 @@ class MutasiController extends Controller
             $oldDetail = MutasiDetail::where('mutasi_id', $mutasi->id)->get();
 
             foreach ($oldDetail as $d) {
-                $this->stokService->rollbackStok(
-                    $d->barang_id,
-                    $d->tipe,
-                    (int)$d->qty
-                );
+                if (in_array($d->tipe, ['baik_ke_sales', 'sales_ke_baik'])) {
+                    $this->stokService->rollbackMutasiSales($d->tipe, $d->barang_id, (int)$d->qty);
+                } else {
+                    $this->stokService->rollbackStok($d->barang_id, $d->tipe, (int)$d->qty);
+                }
             }
 
             MutasiDetail::where('mutasi_id', $mutasi->id)->delete();
@@ -251,6 +315,7 @@ class MutasiController extends Controller
             $mutasi->update([
                 'tanggal' => $post['tanggal'],
                 'keterangan' => $post['keterangan'],
+                'sales_id' => !empty($post['sales_id']) ? $post['sales_id'] : null,
             ]);
 
             foreach ($group as $g) {
@@ -260,11 +325,7 @@ class MutasiController extends Controller
                     throw new BusinessException('Stok barang tidak ditemukan');
                 }
 
-                if (
-                    $g['tipe'] === 'baik_ke_rusak'
-                    &&
-                    $g['qty'] > (int)$stok['stok_baik']
-                ) {
+                if ($g['tipe'] === 'baik_ke_rusak' && $g['qty'] > (int)$stok['stok_baik']) {
                     $barang = Barang::find($g['barang_id']);
                     throw new BusinessException(
                         'Jumlah yang Anda masukkan melebihi stok baik: '
@@ -272,14 +333,26 @@ class MutasiController extends Controller
                     );
                 }
 
-                if (
-                    $g['tipe'] === 'rusak_ke_baik'
-                    &&
-                    $g['qty'] > (int)$stok['stok_rusak']
-                ) {
+                if ($g['tipe'] === 'rusak_ke_baik' && $g['qty'] > (int)$stok['stok_rusak']) {
                     $barang = Barang::find($g['barang_id']);
                     throw new BusinessException(
                         'Jumlah yang Anda masukkan melebihi stok rusak: '
+                        . ($barang ? $barang->nama_barang : 'Barang')
+                    );
+                }
+
+                if ($g['tipe'] === 'baik_ke_sales' && $g['qty'] > (int)$stok['stok_baik']) {
+                    $barang = Barang::find($g['barang_id']);
+                    throw new BusinessException(
+                        'Jumlah yang Anda masukkan melebihi stok baik: '
+                        . ($barang ? $barang->nama_barang : 'Barang')
+                    );
+                }
+
+                if ($g['tipe'] === 'sales_ke_baik' && $g['qty'] > (int)$stok['stok_sales']) {
+                    $barang = Barang::find($g['barang_id']);
+                    throw new BusinessException(
+                        'Jumlah yang Anda masukkan melebihi stok sales: '
                         . ($barang ? $barang->nama_barang : 'Barang')
                     );
                 }
@@ -293,11 +366,11 @@ class MutasiController extends Controller
                     'qty' => $g['qty'],
                 ]);
 
-                $this->stokService->mutasiStok(
-                    $g['barang_id'],
-                    $g['tipe'],
-                    $g['qty']
-                );
+                if (in_array($g['tipe'], ['baik_ke_sales', 'sales_ke_baik'])) {
+                    $this->stokService->mutasiStokSales($g['tipe'], $g['barang_id'], $g['qty']);
+                } else {
+                    $this->stokService->mutasiStok($g['barang_id'], $g['tipe'], $g['qty']);
+                }
             }
 
             DB::commit();
@@ -311,7 +384,12 @@ class MutasiController extends Controller
             $barangNames = [];
             foreach ($group as $g) {
                 $b = Barang::find($g['barang_id']);
-                $tipeLabel = $g['tipe'] === 'baik_ke_rusak' ? 'Baik→Rusak' : 'Rusak→Baik';
+                $tipeLabel = match ($g['tipe']) {
+                    'baik_ke_rusak' => 'Baik→Rusak',
+                    'rusak_ke_baik' => 'Rusak→Baik',
+                    'baik_ke_sales' => 'Baik→Sales',
+                    'sales_ke_baik' => 'Sales→Baik',
+                };
                 $barangNames[] = ($b ? $b->nama_barang : 'Barang') . ' (' . $tipeLabel . ' ' . $g['qty'] . ')';
             }
             $message = $mutasi->no_mutasi . ': ' . implode(', ', $barangNames);
@@ -360,11 +438,19 @@ class MutasiController extends Controller
             $detail = MutasiDetail::where('mutasi_id', $mutasi->id)->get();
 
             foreach ($detail as $d) {
-                $this->stokService->rollbackStok(
-                    $d->barang_id,
-                    $d->tipe,
-                    (int)$d->qty
-                );
+                if (in_array($d->tipe, ['baik_ke_sales', 'sales_ke_baik'])) {
+                    $this->stokService->rollbackMutasiSales(
+                        $d->tipe,
+                        $d->barang_id,
+                        (int)$d->qty
+                    );
+                } else {
+                    $this->stokService->rollbackStok(
+                        $d->barang_id,
+                        $d->tipe,
+                        (int)$d->qty
+                    );
+                }
             }
 
             MutasiDetail::where('mutasi_id', $mutasi->id)->delete();

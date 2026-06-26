@@ -21,14 +21,21 @@
 
         <div class="p-5 sm:p-6">
 
-            <!-- ROW 1: NO MUTASI + TANGGAL + TIPE + KETERANGAN -->
+            <!-- ROW 1: NO MUTASI + TANGGAL + TIPE + (SALES kalau kanvas) -->
             <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
 
                 <!-- NO MUTASI -->
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">No Mutasi</label>
+                    @if($tipe === 'kanvas')
+                    <input type="text" name="no_mutasi" value="{{ old('no_mutasi', $noMutasi) }}"
+                           class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 uppercase"
+                           placeholder="{{ date('Ym') }} + 4 digit" required
+                           oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">
+                    @else
                     <input type="text" name="no_mutasi" value="{{ $noMutasi }}" readonly
                            class="h-11 w-full rounded-lg border border-gray-300 bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-800 shadow-theme-xs cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-white/90 uppercase">
+                    @endif
                 </div>
 
                 <!-- TANGGAL -->
@@ -53,12 +60,44 @@
                     <select name="tipe" id="tipeMutasi"
                             class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" required>
                         <option value="">-- Pilih Tipe --</option>
-                        <option value="baik_ke_rusak" {{ old('tipe') === 'baik_ke_rusak' ? 'selected' : '' }}>Baik &rarr; Rusak</option>
-                        <option value="rusak_ke_baik" {{ old('tipe') === 'rusak_ke_baik' ? 'selected' : '' }}>Rusak &rarr; Baik</option>
+                            @foreach($tipeOptions as $opt)
+                                <option value="{{ $opt }}" {{ old('tipe') === $opt ? 'selected' : '' }}>
+                                    @if($opt === 'baik_ke_rusak') Baik &rarr; Rusak
+                                    @elseif($opt === 'rusak_ke_baik') Rusak &rarr; Baik
+                                    @elseif($opt === 'baik_ke_sales') Baik &rarr; Sales
+                                    @elseif($opt === 'sales_ke_baik') Sales &rarr; Baik
+                                    @endif
+                                </option>
+                            @endforeach
                     </select>
                 </div>
 
-                <!-- KETERANGAN -->
+                @if($tipe === 'kanvas')
+                <!-- SALES -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Sales <span class="text-error-500">*</span></label>
+                    <select name="sales_id" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 select2" required>
+                        <option value="">-- Pilih Sales --</option>
+                        @foreach($salesList as $s)
+                            <option value="{{ $s->id }}" {{ old('sales_id') == $s->id ? 'selected' : '' }}>{{ $s->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @else
+                <!-- KETERANGAN (kondisi) -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Keterangan</label>
+                    <textarea name="keterangan"
+                              class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 uppercase"
+                              rows="2"
+                              oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">{{ old('keterangan') }}</textarea>
+                </div>
+                @endif
+            </div>
+
+            @if($tipe === 'kanvas')
+            <!-- KETERANGAN (kanvas) -->
+            <div class="grid grid-cols-1 gap-4 mt-4">
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Keterangan</label>
                     <textarea name="keterangan"
@@ -67,6 +106,7 @@
                               oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">{{ old('keterangan') }}</textarea>
                 </div>
             </div>
+            @endif
 
             <hr class="border-gray-200 dark:border-gray-800 my-6">
 
@@ -87,8 +127,8 @@
                     <input type="number" id="inputQty" value="1" min="1"
                            class="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-2 py-2 text-sm text-center text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                 </div>
-                <div class="w-full sm:w-32">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">Stok</label>
+                <div class="w-full sm:max-w-[220px] sm:w-auto">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">Stok Info</label>
                     <div id="stokInfo" class="h-10 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 px-2 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">--</div>
                 </div>
                 <button type="button" id="btnTambah"
@@ -160,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
             onChange: function(value) {
                 var stok = stokIndex[value];
                 if (stok) {
-                    stokInfo.innerHTML = 'Baik: <span style="color:#2563eb;font-weight:600">' + (stok.stok_baik || 0) + '</span> &nbsp; Rusak: <span style="color:#ea580c;font-weight:600">' + (stok.stok_rusak || 0) + '</span>';
+                    stokInfo.innerHTML = 'Baik: <span style="color:#2563eb;font-weight:600">' + (stok.stok_baik || 0) + '</span> &nbsp; Rusak: <span style="color:#ea580c;font-weight:600">' + (stok.stok_rusak || 0) + '</span> &nbsp; Sales: <span style="color:#8b5cf6;font-weight:600">' + (stok.stok_sales || 0) + '</span>';
                 } else {
                     stokInfo.innerHTML = '<span style="color:#f59e0b">Belum ada stok</span>';
                 }

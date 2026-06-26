@@ -60,6 +60,11 @@
                     <span class="text-sm text-gray-500 dark:text-gray-400">Stok Rusak</span>
                     <h4 class="mt-2 text-title-sm font-bold text-error-600 dark:text-error-500">{{ number_format($totalStokRusak) }}</h4>
                 </div>
+                <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
+                <div class="flex-1 text-center">
+                    <span class="text-sm text-gray-500 dark:text-gray-400">Stok Sales</span>
+                    <h4 class="mt-2 text-title-sm font-bold text-purple-600 dark:text-purple-400">{{ number_format($totalStokSales) }}</h4>
+                </div>
             </div>
         </div>
     </div>

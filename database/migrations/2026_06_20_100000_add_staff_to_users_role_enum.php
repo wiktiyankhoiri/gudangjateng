@@ -22,6 +22,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         // Cek apakah ada native enum type untuk role
         $enumType = DB::selectOne("
             SELECT t.typname

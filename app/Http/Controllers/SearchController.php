@@ -19,7 +19,7 @@ class SearchController extends Controller
         $searchTerm = str_replace(' ', '', $escLow);
 
         $barang = DB::table('barang as b')
-            ->select('b.id', 'b.kode_barang', 'b.nama_barang', 's.stok_baik', 's.stok_rusak')
+            ->select('b.id', 'b.kode_barang', 'b.nama_barang', 's.stok_baik', 's.stok_rusak', 's.stok_sales')
             ->leftJoin('stok as s', 's.barang_id', '=', 'b.id')
             ->where(function ($q) use ($searchTerm) {
                 $q->whereRaw('REPLACE(b.kode_barang, \' \', \'\') ILIKE ?', ['%' . $searchTerm . '%'])

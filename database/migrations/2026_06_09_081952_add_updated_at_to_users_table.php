@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('users', 'updated_at')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->timestamp('updated_at')->nullable()->after('created_at');
         });
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('updated_at');
-        });
+        // updated_at is part of the base users timestamps in current schema.
     }
 };

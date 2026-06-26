@@ -118,7 +118,7 @@ class LaporanSalesStokController extends Controller
         // Build result
         $data = [];
         foreach ($results as $row) {
-            $stok = $stokMap[$row->id] ?? (object)['stok_baik' => 0, 'stok_rusak' => 0];
+            $stok = $stokMap[$row->id] ?? (object)['stok_baik' => 0, 'stok_rusak' => 0, 'stok_sales' => 0];
             $stokAwal = (int)$row->stok_awal_initial + (int)$row->stok_awal_masuk - (int)$row->stok_awal_keluar + (int)$row->stok_awal_penyesuaian;
             $totalMasuk = (int)$row->masuk_pabrik + (int)$row->masuk_retur;
 
@@ -132,7 +132,8 @@ class LaporanSalesStokController extends Controller
                 'sales' => (int)$row->keluar_sales,
                 'sisa_baik' => (int)$stok->stok_baik,
                 'sisa_rusak' => (int)$stok->stok_rusak,
-                'total' => (int)$stok->stok_baik + (int)$stok->stok_rusak,
+                'sisa_sales' => (int)$stok->stok_sales,
+                'total' => (int)$stok->stok_baik + (int)$stok->stok_rusak + (int)$stok->stok_sales,
             ];
         }
 
@@ -171,6 +172,7 @@ class LaporanSalesStokController extends Controller
             'sales' => array_sum(array_column($allData, 'sales')),
             'sisa_baik' => array_sum(array_column($allData, 'sisa_baik')),
             'sisa_rusak' => array_sum(array_column($allData, 'sisa_rusak')),
+            'sisa_sales' => array_sum(array_column($allData, 'sisa_sales')),
             'total' => array_sum(array_column($allData, 'total')),
         ];
 
@@ -224,8 +226,8 @@ class LaporanSalesStokController extends Controller
             $sheet->mergeCells('D4:D5');
             $sheet->mergeCells('E4:G4');
             $sheet->mergeCells('H4:H4');
-            $sheet->mergeCells('I4:J4');
-            $sheet->mergeCells('K4:K5');
+            $sheet->mergeCells('I4:K4');
+            $sheet->mergeCells('L4:L5');
 
             $sheet->setCellValue('A4', 'NO');
             $sheet->setCellValue('B4', 'KODE');
@@ -240,7 +242,8 @@ class LaporanSalesStokController extends Controller
             $sheet->setCellValue('I4', 'SISA STOK');
             $sheet->setCellValue('I5', 'BAIK');
             $sheet->setCellValue('J5', 'RUSAK');
-            $sheet->setCellValue('K4', 'TOTAL');
+            $sheet->setCellValue('K5', 'SALES');
+            $sheet->setCellValue('L4', 'TOTAL');
 
             // Data
             $row = 6;
@@ -257,14 +260,15 @@ class LaporanSalesStokController extends Controller
                 $sheet->setCellValue('H' . $row, $d['sales']);
                 $sheet->setCellValue('I' . $row, $d['sisa_baik']);
                 $sheet->setCellValue('J' . $row, $d['sisa_rusak']);
-                $sheet->setCellValue('K' . $row, $d['total']);
+                $sheet->setCellValue('K' . $row, $d['sisa_sales']);
+                $sheet->setCellValue('L' . $row, $d['total']);
                 $row++;
             }
 
             // Style
-            $sheet->getStyle('A1:K5')->getFont()->setBold(true);
+            $sheet->getStyle('A1:L5')->getFont()->setBold(true);
 
-            $sheet->getStyle('A4:K5')->getAlignment()
+            $sheet->getStyle('A4:L5')->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                 ->setVertical(Alignment::VERTICAL_CENTER);
 
@@ -275,14 +279,14 @@ class LaporanSalesStokController extends Controller
                 ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                 ->setVertical(Alignment::VERTICAL_CENTER);
 
-            $sheet->getStyle('D6:K' . ($row - 1))->getAlignment()
+            $sheet->getStyle('D6:L' . ($row - 1))->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                 ->setVertical(Alignment::VERTICAL_CENTER);
 
-            $sheet->getStyle('A4:K' . ($row - 1))->getBorders()
+            $sheet->getStyle('A4:L' . ($row - 1))->getBorders()
                 ->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-            $sheet->getStyle('A4:K5')->getFill()
+            $sheet->getStyle('A4:L5')->getFill()
                 ->setFillType(Fill::FILL_SOLID)
                 ->getStartColor()->setARGB('D9EAF7');
 
@@ -298,37 +302,38 @@ class LaporanSalesStokController extends Controller
             $sheet->setCellValue('I' . $row, '=SUM(I6:I' . ($row - 1) . ')');
             $sheet->setCellValue('J' . $row, '=SUM(J6:J' . ($row - 1) . ')');
             $sheet->setCellValue('K' . $row, '=SUM(K6:K' . ($row - 1) . ')');
+            $sheet->setCellValue('L' . $row, '=SUM(L6:L' . ($row - 1) . ')');
 
-            $sheet->getStyle('A' . $row . ':K' . $row)->getFont()->setBold(true);
-            $sheet->getStyle('A' . $row . ':K' . $row)->getAlignment()
+            $sheet->getStyle('A' . $row . ':L' . $row)->getFont()->setBold(true);
+            $sheet->getStyle('A' . $row . ':L' . $row)->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_CENTER)
                 ->setVertical(Alignment::VERTICAL_CENTER);
-            $sheet->getStyle('A' . $row . ':K' . $row)->getBorders()
+            $sheet->getStyle('A' . $row . ':L' . $row)->getBorders()
                 ->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-            $sheet->getStyle('A' . $row . ':K' . $row)->getFill()
+            $sheet->getStyle('A' . $row . ':L' . $row)->getFill()
                 ->setFillType(Fill::FILL_SOLID)
                 ->getStartColor()->setARGB('D9EAF7');
 
             $row += 3;
 
             // Signature
-            $sheet->mergeCells('H' . $row . ':K' . $row);
-            $sheet->setCellValue('H' . $row, 'SEMARANG, ' . date('d F Y'));
+            $sheet->mergeCells('I' . $row . ':L' . $row);
+            $sheet->setCellValue('I' . $row, 'SEMARANG, ' . date('d F Y'));
             $sheet->getStyle('H' . $row)->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
             $row++;
-            $sheet->setCellValue('H' . $row, 'KEPALA GUDANG');
-            $sheet->setCellValue('J' . $row, 'KEPALA CABANG');
-            $sheet->getStyle('H' . $row . ':K' . $row)->getFont()->setBold(true);
+            $sheet->setCellValue('I' . $row, 'KEPALA GUDANG');
+            $sheet->setCellValue('K' . $row, 'KEPALA CABANG');
+            $sheet->getStyle('I' . $row . ':L' . $row)->getFont()->setBold(true);
 
             $row += 5;
-            $sheet->setCellValue('H' . $row, 'WIKTIYAN KHOIRI');
-            $sheet->setCellValue('J' . $row, 'MOH CHOIRUL MUHSON');
-            $sheet->getStyle('H' . $row . ':K' . $row)->getFont()->setBold(true);
+            $sheet->setCellValue('I' . $row, 'WIKTIYAN KHOIRI');
+            $sheet->setCellValue('K' . $row, 'MOH CHOIRUL MUHSON');
+            $sheet->getStyle('I' . $row . ':L' . $row)->getFont()->setBold(true);
 
             // Auto size
-            foreach (range('A', 'K') as $col) {
+            foreach (range('A', 'L') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 

@@ -110,6 +110,7 @@
                                 <div class="mt-0.5 text-xs font-normal flex justify-center text-gray-500 dark:text-gray-400">
                                     <span class="text-brand-500 dark:text-brand-400">Baik <strong>{{ number_format($stokBaik ?? 0) }}</strong></span>
                                     <span class="text-error-500 dark:text-error-400 ml-2">Rusak <strong>{{ number_format($stokRusak ?? 0) }}</strong></span>
+                                    <span class="text-purple-500 dark:text-purple-400 ml-2">Sales <strong>{{ number_format($stokSales ?? 0) }}</strong></span>
                                 </div>
                             </td>
                         </tr>

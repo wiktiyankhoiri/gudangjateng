@@ -19,10 +19,13 @@ class StokOpnameDetail extends Model
         'barang_id',
         'stok_sistem_baik',
         'stok_sistem_rusak',
+        'stok_sistem_sales',
         'stok_fisik_baik',
         'stok_fisik_rusak',
+        'stok_fisik_sales',
         'selisih_baik',
         'selisih_rusak',
+        'selisih_sales',
         'keterangan',
     ];
 

@@ -11,8 +11,8 @@
 
         <div class="p-5 sm:p-6">
 
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div class="md:col-span-2">
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Barang</label>
                     <select name="barang_id" id="barang_id"
                         class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800 select2" required>
@@ -21,13 +21,16 @@
                             @php $sInfo = $stokAll[$b->id] ?? null; @endphp
                             <option value="{{ $b->id }}"
                                 data-stok-baik="{{ $sInfo->stok_baik ?? 0 }}"
-                                data-stok-rusak="{{ $sInfo->stok_rusak ?? 0 }}">
+                                data-stok-rusak="{{ $sInfo->stok_rusak ?? 0 }}"
+                                data-stok-sales="{{ $sInfo->stok_sales ?? 0 }}">
                                 {{ $b->kode_barang }} - {{ $b->nama_barang }}
                             </option>
                         @endforeach
                     </select>
                     <p id="stokInfoText" class="mt-1.5 text-sm text-gray-500 dark:text-gray-400 hidden">
-                        Stok saat ini: <strong id="stokBaikLabel">0</strong> baik, <strong id="stokRusakLabel">0</strong> rusak
+                        Stok saat ini: <strong id="stokBaikLabel" class="text-brand-600 dark:text-brand-400">0</strong> <span class="text-brand-600 dark:text-brand-400">baik</span>,
+                        <strong id="stokRusakLabel" class="text-error-600 dark:text-error-400">0</strong> <span class="text-error-600 dark:text-error-400">rusak</span>,
+                        <strong id="stokSalesLabel" class="text-purple-600 dark:text-purple-400">0</strong> <span class="text-purple-600 dark:text-purple-400">sales</span>
                     </p>
                 </div>
 
@@ -59,7 +62,14 @@
                     <p id="selisihRusak" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Selisih: 0</p>
                 </div>
 
-                <div class="md:col-span-2">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stok Sales Final</label>
+                    <input type="number" name="stok_sales_sesudah" id="stokSalesFinal" value="0" min="0" required
+                        class="dark:bg-dark-900 shadow-theme-xs h-11 w-full rounded-lg border border-gray-300 bg-transparent bg-none px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30">
+                    <p id="selisihSales" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Selisih: 0</p>
+                </div>
+
+                <div class="md:col-span-3">
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Alasan Penyesuaian</label>
                     <textarea name="alasan" rows="3" placeholder="Contoh: Koreksi qty barang masuk, Selisih stok opname, Barang hilang, dll" required
                         class="w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 uppercase"
@@ -97,14 +107,16 @@ document.addEventListener('DOMContentLoaded', function () {
         var stok = stokIndex[id] || {};
         var sb = parseInt(stok.stok_baik) || 0;
         var sr = parseInt(stok.stok_rusak) || 0;
+        var ss = parseInt(stok.stok_sales) || 0;
         if (id) {
             document.getElementById('stokBaikLabel').textContent = sb;
             document.getElementById('stokRusakLabel').textContent = sr;
+            document.getElementById('stokSalesLabel').textContent = ss;
             document.getElementById('stokInfoText').classList.remove('hidden');
-            ['stokBaikFinal','stokRusakFinal'].forEach(function(fid, i) {
+            ['stokBaikFinal','stokRusakFinal','stokSalesFinal'].forEach(function(fid, i) {
                 var el = document.getElementById(fid);
                 if (el.value == '0' || el.dataset.auto) {
-                    el.value = i === 0 ? sb : sr;
+                    el.value = i === 0 ? sb : (i === 1 ? sr : ss);
                     el.dataset.auto = 'true';
                 }
             });
@@ -118,12 +130,14 @@ document.addEventListener('DOMContentLoaded', function () {
         var stok = stokIndex[id] || {};
         var sb = parseInt(stok.stok_baik) || 0;
         var sr = parseInt(stok.stok_rusak) || 0;
+        var ss = parseInt(stok.stok_sales) || 0;
         var bf = parseInt(document.getElementById('stokBaikFinal').value) || 0;
         var rf = parseInt(document.getElementById('stokRusakFinal').value) || 0;
-        var db = bf - sb, dr = rf - sr;
-        ['selisihBaik','selisihRusak'].forEach(function(id, i) {
+        var sf = parseInt(document.getElementById('stokSalesFinal').value) || 0;
+        var db = bf - sb, dr = rf - sr, ds = sf - ss;
+        ['selisihBaik','selisihRusak','selisihSales'].forEach(function(id, i) {
             var el = document.getElementById(id);
-            var v = i === 0 ? db : dr;
+            var v = i === 0 ? db : (i === 1 ? dr : ds);
             el.textContent = 'Selisih: ' + (v > 0 ? '+' : '') + v;
             el.className = 'mt-1 text-xs ' + (v !== 0 ? 'text-warning-500 font-medium' : 'text-gray-500 dark:text-gray-400');
         });
@@ -136,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     document.getElementById('stokBaikFinal').addEventListener('input', calc);
     document.getElementById('stokRusakFinal').addEventListener('input', calc);
+    document.getElementById('stokSalesFinal').addEventListener('input', calc);
 });
 </script>
 @endpush

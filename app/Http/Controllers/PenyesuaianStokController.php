@@ -74,6 +74,7 @@ class PenyesuaianStokController extends Controller
         $barangId = (int)($request->input('barang_id') ?? 0);
         $stokBaikSesudah = (int)($request->input('stok_baik_sesudah') ?? 0);
         $stokRusakSesudah = (int)($request->input('stok_rusak_sesudah') ?? 0);
+        $stokSalesSesudah = (int)($request->input('stok_sales_sesudah') ?? 0);
         $alasan = trim($request->input('alasan') ?? '');
         $tanggal = $request->input('tanggal') ?? now()->format('Y-m-d');
 
@@ -81,7 +82,7 @@ class PenyesuaianStokController extends Controller
             return redirect()->back()->withInput()->with('error', 'Barang wajib dipilih');
         }
 
-        if ($stokBaikSesudah < 0 || $stokRusakSesudah < 0) {
+        if ($stokBaikSesudah < 0 || $stokRusakSesudah < 0 || $stokSalesSesudah < 0) {
             return redirect()->back()->withInput()->with('error', 'Stok tidak boleh minus');
         }
 
@@ -96,9 +97,11 @@ class PenyesuaianStokController extends Controller
 
             $stokBaikSebelum = (int)$stok['stok_baik'];
             $stokRusakSebelum = (int)$stok['stok_rusak'];
+            $stokSalesSebelum = (int)$stok['stok_sales'];
 
             $selisihBaik = $stokBaikSesudah - $stokBaikSebelum;
             $selisihRusak = $stokRusakSesudah - $stokRusakSebelum;
+            $selisihSales = $stokSalesSesudah - $stokSalesSebelum;
 
             $penyesuaian = PenyesuaianStok::create([
                 'tanggal' => $tanggal,
@@ -107,8 +110,11 @@ class PenyesuaianStokController extends Controller
                 'stok_baik_sesudah' => $stokBaikSesudah,
                 'stok_rusak_sebelum' => $stokRusakSebelum,
                 'stok_rusak_sesudah' => $stokRusakSesudah,
+                'stok_sales_sebelum' => $stokSalesSebelum,
+                'stok_sales_sesudah' => $stokSalesSesudah,
                 'selisih_baik' => $selisihBaik,
                 'selisih_rusak' => $selisihRusak,
+                'selisih_sales' => $selisihSales,
                 'alasan' => $alasan,
                 'user_id' => auth()->id(),
             ]);
@@ -118,6 +124,7 @@ class PenyesuaianStokController extends Controller
             $this->stokService->updateStokById((int)$stok['id'], [
                 'stok_baik' => $stokBaikSesudah,
                 'stok_rusak' => $stokRusakSesudah,
+                'stok_sales' => $stokSalesSesudah,
             ]);
 
             DB::commit();
@@ -128,13 +135,16 @@ class PenyesuaianStokController extends Controller
                 'stok_baik_sesudah' => $stokBaikSesudah,
                 'stok_rusak_sebelum' => $stokRusakSebelum,
                 'stok_rusak_sesudah' => $stokRusakSesudah,
+                'stok_sales_sebelum' => $stokSalesSebelum,
+                'stok_sales_sesudah' => $stokSalesSesudah,
                 'selisih_baik' => $selisihBaik,
                 'selisih_rusak' => $selisihRusak,
+                'selisih_sales' => $selisihSales,
             ]);
 
             $barang = Barang::find($barangId);
             $barangName = $barang ? $barang->nama_barang : 'Barang';
-            $message = $barangName . ' — Baik: ' . $stokBaikSebelum . '→' . $stokBaikSesudah . ', Rusak: ' . $stokRusakSebelum . '→' . $stokRusakSesudah;
+            $message = $barangName . ' — Baik: ' . $stokBaikSebelum . '→' . $stokBaikSesudah . ', Rusak: ' . $stokRusakSebelum . '→' . $stokRusakSesudah . ', Sales: ' . $stokSalesSebelum . '→' . $stokSalesSesudah;
 
             Notification::notify('Penyesuaian Stok Baru', $message, 'penyesuaian_stok', $id, ['admin', 'audit']);
 

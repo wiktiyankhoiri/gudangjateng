@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Mutasi extends Model
@@ -16,6 +17,7 @@ class Mutasi extends Model
         'no_mutasi',
         'tanggal',
         'keterangan',
+        'sales_id',
     ];
 
     protected $casts = [
@@ -27,10 +29,15 @@ class Mutasi extends Model
         return $this->hasMany(MutasiDetail::class);
     }
 
+    public function sales(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sales_id');
+    }
+
     /**
      * Generate nomor mutasi otomatis.
-     * Format: {prefix}{Y}{m}{nnn} — reset per tahun
-     * Contoh: M202606001 (Mutasi, Juni 2026, no 1)
+     * Format: {prefix}{Y}{m}{nnnn} — reset per tahun
+     * Contoh: M2026060001 (Mutasi, Juni 2026, no 1)
      */
     public static function generateNoMutasi(string $prefix = 'M'): string
     {
@@ -42,10 +49,10 @@ class Mutasi extends Model
             ->first();
 
         $nextSeq = 1;
-        if ($last && preg_match('/' . $prefix . $year . '\d{2}(\d+)$/', $last->no_mutasi, $matches)) {
+        if ($last && preg_match('/' . $prefix . $year . '\d{2}(\d{4})$/', $last->no_mutasi, $matches)) {
             $nextSeq = (int) $matches[1] + 1;
         }
 
-        return $prefix . $year . $month . str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+        return $prefix . $year . $month . str_pad($nextSeq, 4, '0', STR_PAD_LEFT);
     }
 }

@@ -112,15 +112,26 @@ class KartuStokController extends Controller
                             m.tanggal,
                             m.no_mutasi as surat_jalan,
                             CASE
-                                WHEN md.tipe = 'baik_ke_rusak'
-                                THEN 'Mutasi Baik ke Rusak'
-                                ELSE 'Mutasi Rusak ke Baik'
+                                WHEN md.tipe = 'baik_ke_rusak' THEN 'Mutasi Baik ke Rusak'
+                                WHEN md.tipe = 'rusak_ke_baik' THEN 'Mutasi Rusak ke Baik'
+                                WHEN md.tipe = 'baik_ke_sales' THEN 'Berangkat Kanvas'
+                                WHEN md.tipe = 'sales_ke_baik' THEN 'Sisa Kanvas'
                             END as transaksi,
-                            COALESCE(m.keterangan, '-') as keterangan,
+                            CASE
+                                WHEN md.tipe IN ('baik_ke_sales', 'sales_ke_baik') AND sales_mutasi.id IS NOT NULL
+                                THEN
+                                    CASE
+                                        WHEN m.keterangan IS NOT NULL AND m.keterangan != ''
+                                        THEN CONCAT(m.keterangan, ' | Sales: ', sales_mutasi.nama)
+                                        ELSE CONCAT('Sales: ', sales_mutasi.nama)
+                                    END
+                                ELSE COALESCE(m.keterangan, '-')
+                            END as keterangan,
                             0 as masuk,
                             0 as keluar
                         FROM mutasi_detail md
                         JOIN mutasi m ON m.id = md.mutasi_id
+                        LEFT JOIN users sales_mutasi ON sales_mutasi.id = m.sales_id
                         WHERE md.barang_id = ? AND m.tanggal >= ? AND m.tanggal < ?
                     )
                     UNION ALL
@@ -131,13 +142,13 @@ class KartuStokController extends Controller
                             'Penyesuaian Stok' as transaksi,
                             COALESCE(ps.alasan, '-') as keterangan,
                             CASE
-                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0)) > 0
-                                THEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0))
+                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) > 0
+                                THEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0))
                                 ELSE 0
                             END as masuk,
                             CASE
-                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0)) < 0
-                                THEN ABS(COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0))
+                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) < 0
+                                THEN ABS(COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0))
                                 ELSE 0
                             END as keluar
                         FROM penyesuaian_stok ps
@@ -232,13 +243,13 @@ class KartuStokController extends Controller
                     (
                         SELECT
                             CASE
-                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0)) > 0
-                                THEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0))
+                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) > 0
+                                THEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0))
                                 ELSE 0
                             END as masuk,
                             CASE
-                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0)) < 0
-                                THEN ABS(COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0))
+                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) < 0
+                                THEN ABS(COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0))
                                 ELSE 0
                             END as keluar
                         FROM penyesuaian_stok ps
@@ -255,16 +266,19 @@ class KartuStokController extends Controller
             $stok = Stok::where('barang_id', $barangId)->first();
 
             if ($stok) {
-                $saldoAkhir = (int)$stok->stok_baik + (int)$stok->stok_rusak;
+                $saldoAkhir = (int)$stok->stok_baik + (int)$stok->stok_rusak + (int)$stok->stok_sales;
                 $stokBaik = (int)$stok->stok_baik;
                 $stokRusak = (int)$stok->stok_rusak;
+                $stokSales = (int)$stok->stok_sales;
             } else {
                 $stokBaik = 0;
                 $stokRusak = 0;
+                $stokSales = 0;
             }
         } else {
             $stokBaik = 0;
             $stokRusak = 0;
+            $stokSales = 0;
         }
 
         $data = [
@@ -278,6 +292,7 @@ class KartuStokController extends Controller
             'totalKeluar' => $totalKeluar,
             'stokBaik' => $stokBaik,
             'stokRusak' => $stokRusak,
+            'stokSales' => $stokSales,
         ];
 
         return view('laporan.kartu-stok', $data);

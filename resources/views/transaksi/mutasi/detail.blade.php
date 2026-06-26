@@ -17,6 +17,12 @@
                 <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Keterangan</p>
                 <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $mutasi->keterangan ?: '-' }}</p>
             </div>
+            @if($mutasi->sales)
+            <div>
+                <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Sales</p>
+                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $mutasi->sales->nama }}</p>
+            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -45,8 +51,12 @@
                     <td class="px-5 py-4 text-center">
                         @if($d->tipe == 'baik_ke_rusak')
                             <span class="inline-flex items-center rounded-full bg-warning-50 px-2.5 py-1 text-xs font-medium text-warning-600 dark:bg-warning-500/15 dark:text-warning-400">Baik &rarr; Rusak</span>
-                        @else
+                        @elseif($d->tipe == 'rusak_ke_baik')
                             <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">Rusak &rarr; Baik</span>
+                        @elseif($d->tipe == 'baik_ke_sales')
+                            <span class="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-600 dark:bg-purple-500/15 dark:text-purple-400">Baik &rarr; Sales</span>
+                        @else
+                            <span class="inline-flex items-center rounded-full bg-cyan-50 px-2.5 py-1 text-xs font-medium text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-400">Sales &rarr; Baik</span>
                         @endif
                     </td>
                     <td class="px-5 py-4 text-center text-sm font-semibold text-gray-800 dark:text-white/90">{{ number_format($d->qty) }}</td>

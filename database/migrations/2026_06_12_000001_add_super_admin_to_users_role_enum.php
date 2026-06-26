@@ -21,6 +21,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::connection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         // PostgreSQL: ALTER TYPE tidak bisa dijalankan di dalam transaction.
         // Cek dulu apakah value sudah ada untuk menghindari error jika di-run ulang.
         $existing = DB::select("

@@ -21,8 +21,11 @@ class PenyesuaianStok extends Model
         'stok_baik_sesudah',
         'stok_rusak_sebelum',
         'stok_rusak_sesudah',
+        'stok_sales_sebelum',
+        'stok_sales_sesudah',
         'selisih_baik',
         'selisih_rusak',
+        'selisih_sales',
         'alasan',
         'user_id',
     ];

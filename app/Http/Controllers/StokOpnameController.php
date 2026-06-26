@@ -53,7 +53,7 @@ class StokOpnameController extends Controller
 
     public function create()
     {
-        $barang = Barang::orderBy('nama_barang', 'ASC')->get();
+        $barang = Barang::orderBy('kode_barang', 'ASC')->get();
 
         // Ambil semua stok
         $stokRows = DB::table('stok')
@@ -80,6 +80,7 @@ class StokOpnameController extends Controller
         $barangIds = (array) ($request->input('barang_id') ?? []);
         $fisikBaik = (array) ($request->input('stok_fisik_baik') ?? []);
         $fisikRusak = (array) ($request->input('stok_fisik_rusak') ?? []);
+        $fisikSales = (array) ($request->input('stok_fisik_sales') ?? []);
         $keteranganDetail = (array) ($request->input('keterangan') ?? []);
 
         if (empty($barangIds)) {
@@ -128,15 +129,17 @@ class StokOpnameController extends Controller
                 $stokSistem = DB::table('stok')->where('barang_id', $barangId)->first();
                 $stokSistemBaik = $stokSistem ? (int) $stokSistem->stok_baik : 0;
                 $stokSistemRusak = $stokSistem ? (int) $stokSistem->stok_rusak : 0;
+                $stokSistemSales = $stokSistem ? (int) $stokSistem->stok_sales : 0;
 
                 $fisikBaikVal = (int) ($fisikBaik[$i] ?? 0);
                 $fisikRusakVal = (int) ($fisikRusak[$i] ?? 0);
+                $fisikSalesVal = (int) ($fisikSales[$i] ?? 0);
 
-                if ($fisikBaikVal < 0 || $fisikRusakVal < 0) {
+                if ($fisikBaikVal < 0 || $fisikRusakVal < 0 || $fisikSalesVal < 0) {
                     throw new \App\Exceptions\BusinessException('Jumlah tidak boleh negatif');
                 }
 
-                if ($fisikBaikVal === 0 && $fisikRusakVal === 0) {
+                if ($fisikBaikVal === 0 && $fisikRusakVal === 0 && $fisikSalesVal === 0) {
                     continue;
                 }
 
@@ -145,10 +148,13 @@ class StokOpnameController extends Controller
                     'barang_id' => $barangId,
                     'stok_sistem_baik' => $stokSistemBaik,
                     'stok_sistem_rusak' => $stokSistemRusak,
+                    'stok_sistem_sales' => $stokSistemSales,
                     'stok_fisik_baik' => $fisikBaikVal,
                     'stok_fisik_rusak' => $fisikRusakVal,
+                    'stok_fisik_sales' => $fisikSalesVal,
                     'selisih_baik' => $fisikBaikVal - $stokSistemBaik,
                     'selisih_rusak' => $fisikRusakVal - $stokSistemRusak,
+                    'selisih_sales' => $fisikSalesVal - $stokSistemSales,
                     'keterangan' => trim($keteranganDetail[$i] ?? ''),
                 ]);
 
@@ -202,6 +208,7 @@ class StokOpnameController extends Controller
 
         $totalSelisihBaik = $detail->sum('selisih_baik');
         $totalSelisihRusak = $detail->sum('selisih_rusak');
+        $totalSelisihSales = $detail->sum('selisih_sales');
 
         return view('transaksi.stok-opname.detail', [
             'title' => 'Detail Stok Opname',
@@ -209,6 +216,7 @@ class StokOpnameController extends Controller
             'detail' => $detail,
             'totalSelisihBaik' => $totalSelisihBaik,
             'totalSelisihRusak' => $totalSelisihRusak,
+            'totalSelisihSales' => $totalSelisihSales,
         ]);
     }
 
@@ -246,8 +254,9 @@ class StokOpnameController extends Controller
             foreach ($opname->details as $d) {
                 $stokSistemBaru = (int) $d->stok_fisik_baik;
                 $stokRusakBaru = (int) $d->stok_fisik_rusak;
+                $stokSalesBaru = (int) ($d->stok_fisik_sales ?? -1);
 
-                $this->stokService->adjustStok($d->barang_id, $stokSistemBaru, $stokRusakBaru);
+                $this->stokService->adjustStok($d->barang_id, $stokSistemBaru, $stokRusakBaru, $stokSalesBaru);
             }
 
             $opname->update(['status' => 'diterapkan']);

@@ -53,6 +53,7 @@
                                         <span class="flex-1 text-sm font-medium text-gray-800 dark:text-white/90 truncate" x-text="item['nama_barang']"></span>
                                         <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Baik: <span class="font-semibold text-success-600 dark:text-success-400" x-text="item.stok_baik || 0"></span></span>
                                         <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Rusak: <span class="font-semibold text-error-600 dark:text-error-400" x-text="item.stok_rusak || 0"></span></span>
+                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Sales: <span class="font-semibold text-purple-600 dark:text-purple-400" x-text="item.stok_sales || 0"></span></span>
                                     </div>
                                 </template>
                             </div>
@@ -134,6 +135,9 @@
                                         </span>
                                         <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
                                             Rusak: <span class="font-semibold text-error-600 dark:text-error-400" x-text="item.stok_rusak || 0"></span>
+                                        </span>
+                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                                            Sales: <span class="font-semibold text-purple-600 dark:text-purple-400" x-text="item.stok_sales || 0"></span>
                                         </span>
                                     </div>
                                 </template>

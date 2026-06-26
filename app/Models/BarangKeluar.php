@@ -18,6 +18,7 @@ class BarangKeluar extends Model
         'tanggal',
         'toko_id',
         'sales_id',
+        'sumber',
         'keterangan',
     ];
 

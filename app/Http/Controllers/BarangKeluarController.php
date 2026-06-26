@@ -85,22 +85,34 @@ class BarangKeluarController extends Controller
                 'tanggal' => $post['tanggal'],
                 'toko_id' => !empty($post['toko_id']) ? $post['toko_id'] : null,
                 'sales_id' => !empty($post['sales_id']) ? $post['sales_id'] : null,
+                'sumber' => $post['sumber'] ?? 'gudang',
                 'keterangan' => $post['keterangan'] ?? null,
             ]);
 
             $id = $barangKeluar->id;
+            $sumber = $barangKeluar->sumber;
 
             foreach ($totalQty as $barangId => $qty) {
                 $stok = $this->stokService->lockStok($barangId);
                 if (!$stok) {
                     throw new BusinessException('Stok barang tidak ditemukan');
                 }
-                if ((int)$stok['stok_baik'] < $qty) {
-                    $barang = Barang::find($barangId);
-                    throw new BusinessException(
-                        'Stok baik tidak mencukupi untuk barang: '
-                        . ($barang ? $barang->nama_barang : 'Barang')
-                    );
+                if ($sumber === 'sales') {
+                    if ((int)$stok['stok_sales'] < $qty) {
+                        $barang = Barang::find($barangId);
+                        throw new BusinessException(
+                            'Stok sales tidak mencukupi untuk barang: '
+                            . ($barang ? $barang->nama_barang : 'Barang')
+                        );
+                    }
+                } else {
+                    if ((int)$stok['stok_baik'] < $qty) {
+                        $barang = Barang::find($barangId);
+                        throw new BusinessException(
+                            'Stok baik tidak mencukupi untuk barang: '
+                            . ($barang ? $barang->nama_barang : 'Barang')
+                        );
+                    }
                 }
             }
 
@@ -112,7 +124,11 @@ class BarangKeluarController extends Controller
                     'qty_rusak' => 0,
                 ]);
 
-                $this->stokService->kurangStok($barangId, $qty, 0);
+                if ($sumber === 'sales') {
+                    $this->stokService->kurangStokSales($barangId, $qty);
+                } else {
+                    $this->stokService->kurangStok($barangId, $qty, 0);
+                }
             }
 
             DB::commit();
@@ -161,6 +177,7 @@ class BarangKeluarController extends Controller
             'data' => $barangKeluar,
             'detail' => $detail,
             'stokPerBarang' => $this->getStokPerBarang($detail),
+            'allStok' => $this->stokService->getAllStok(),
             'barang' => Barang::orderBy('nama_barang', 'ASC')->get(),
             'toko' => Toko::orderBy('nama_toko', 'ASC')->get(),
             'salesList' => User::where('role', 'sales')->orderBy('nama', 'ASC')->get(),
@@ -201,8 +218,17 @@ class BarangKeluarController extends Controller
             }
 
             $oldDetail = BarangKeluarDetail::where('barang_keluar_id', $barangKeluar->id)->get();
+            $sumberLama = $barangKeluar->sumber;
+            $sumberBaru = $post['sumber'] ?? 'gudang';
 
-            // Validasi stok baru dulu SEBELUM rollback stok lama
+            foreach ($oldDetail as $d) {
+                if ($sumberLama === 'sales') {
+                    $this->stokService->tambahStokSales($d->barang_id, $d->qty_baik);
+                } else {
+                    $this->stokService->tambahStok($d->barang_id, $d->qty_baik, 0);
+                }
+            }
+
             foreach ($totalQty as $barangId => $qty) {
                 $stok = $this->stokService->lockStok($barangId);
 
@@ -210,18 +236,23 @@ class BarangKeluarController extends Controller
                     throw new BusinessException('Stok barang tidak ditemukan');
                 }
 
-                if ((int)$stok['stok_baik'] < $qty) {
-                    $barang = Barang::find($barangId);
-                    throw new BusinessException(
-                        'Stok baik tidak mencukupi untuk barang: '
-                        . ($barang ? $barang->nama_barang : 'Barang')
-                    );
+                if ($sumberBaru === 'sales') {
+                    if ((int)$stok['stok_sales'] < $qty) {
+                        $barang = Barang::find($barangId);
+                        throw new BusinessException(
+                            'Stok sales tidak mencukupi untuk barang: '
+                            . ($barang ? $barang->nama_barang : 'Barang')
+                        );
+                    }
+                } else {
+                    if ((int)$stok['stok_baik'] < $qty) {
+                        $barang = Barang::find($barangId);
+                        throw new BusinessException(
+                            'Stok baik tidak mencukupi untuk barang: '
+                            . ($barang ? $barang->nama_barang : 'Barang')
+                        );
+                    }
                 }
-            }
-
-            // Rollback stok lama
-            foreach ($oldDetail as $d) {
-                $this->stokService->tambahStok($d->barang_id, $d->qty_baik, 0);
             }
 
             BarangKeluarDetail::where('barang_keluar_id', $barangKeluar->id)->delete();
@@ -231,6 +262,7 @@ class BarangKeluarController extends Controller
                 'tanggal' => $post['tanggal'],
                 'toko_id' => !empty($post['toko_id']) ? $post['toko_id'] : null,
                 'sales_id' => !empty($post['sales_id']) ? $post['sales_id'] : null,
+                'sumber' => $sumberBaru,
                 'keterangan' => $post['keterangan'] ?? null,
             ]);
 
@@ -242,7 +274,11 @@ class BarangKeluarController extends Controller
                     'qty_rusak' => 0,
                 ]);
 
-                $this->stokService->kurangStok($barangId, $qty, 0);
+                if ($sumberBaru === 'sales') {
+                    $this->stokService->kurangStokSales($barangId, $qty);
+                } else {
+                    $this->stokService->kurangStok($barangId, $qty, 0);
+                }
             }
 
             DB::commit();
@@ -303,7 +339,11 @@ class BarangKeluarController extends Controller
             $detail = BarangKeluarDetail::where('barang_keluar_id', $barangKeluar->id)->get();
 
             foreach ($detail as $d) {
-                $this->stokService->tambahStok($d->barang_id, $d->qty_baik, 0);
+                if ($barangKeluar->sumber === 'sales') {
+                    $this->stokService->tambahStokSales($d->barang_id, $d->qty_baik);
+                } else {
+                    $this->stokService->tambahStok($d->barang_id, $d->qty_baik, 0);
+                }
             }
 
             BarangKeluarDetail::where('barang_keluar_id', $barangKeluar->id)->delete();

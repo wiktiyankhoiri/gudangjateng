@@ -13,14 +13,26 @@
             $adaPeringatan = false;
             $peringatanItems = [];
             $barangNama = $barang->pluck('nama_barang', 'id')->toArray();
+            $sumberBK = $data->sumber ?? 'gudang';
             if (isset($stokPerBarang) && isset($detail)):
                 foreach ($detail as $d):
                     $stok = $stokPerBarang[$d->barang_id] ?? null;
-                    if ($stok && (int)$stok['stok_baik'] < (int)$d->qty_baik):
-                        $adaPeringatan = true;
-                        $selisih = (int)$d->qty_baik - (int)$stok['stok_baik'];
-                        $nama = $barangNama[$d->barang_id] ?? ('Barang #' . $d->barang_id);
-                        $peringatanItems[] = sprintf('%s (jumlah keluar %d, stok baik saat ini %d, selisih -%d)', $nama, $d->qty_baik, $stok['stok_baik'], $selisih);
+                    if ($stok):
+                        if ($sumberBK === 'sales') {
+                            if ((int)$stok['stok_sales'] < (int)$d->qty_baik):
+                                $adaPeringatan = true;
+                                $selisih = (int)$d->qty_baik - (int)$stok['stok_sales'];
+                                $nama = $barangNama[$d->barang_id] ?? ('Barang #' . $d->barang_id);
+                                $peringatanItems[] = sprintf('%s (jumlah keluar %d, stok sales saat ini %d, selisih -%d)', $nama, $d->qty_baik, $stok['stok_sales'], $selisih);
+                            endif;
+                        } else {
+                            if ((int)$stok['stok_baik'] < (int)$d->qty_baik):
+                                $adaPeringatan = true;
+                                $selisih = (int)$d->qty_baik - (int)$stok['stok_baik'];
+                                $nama = $barangNama[$d->barang_id] ?? ('Barang #' . $d->barang_id);
+                                $peringatanItems[] = sprintf('%s (jumlah keluar %d, stok baik saat ini %d, selisih -%d)', $nama, $d->qty_baik, $stok['stok_baik'], $selisih);
+                            endif;
+                        }
                     endif;
                 endforeach;
             endif;
@@ -89,10 +101,19 @@
                 </div>
             </div>
 
-            <div class="mt-4">
-                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Keterangan</label>
-                <textarea name="keterangan" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 uppercase" rows="1"
-                    oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">{{ old('keterangan', $data->keterangan) }}</textarea>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 mt-4">
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Sumber Stok</label>
+                    <select name="sumber" id="sumberStok" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" required>
+                        <option value="gudang" {{ old('sumber', $data->sumber ?? 'gudang') === 'gudang' ? 'selected' : '' }}>Gudang</option>
+                        <option value="sales" {{ old('sumber', $data->sumber ?? 'gudang') === 'sales' ? 'selected' : '' }}>Sales (Kanvas)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Keterangan</label>
+                    <textarea name="keterangan" class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 uppercase" rows="1"
+                        oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">{{ old('keterangan', $data->keterangan) }}</textarea>
+                </div>
             </div>
 
             <hr class="border-gray-200 dark:border-gray-800 my-6">
@@ -188,6 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var inputBarang = document.getElementById('inputBarang');
     var inputQty = document.getElementById('inputQty');
     var stokInfo = document.getElementById('stokInfo');
+    var sumberStok = document.getElementById('sumberStok');
 
     // Stock data lookup (all barangs)
     var stokData = [];
@@ -199,6 +221,21 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.keys(stokData).forEach(function(id) { stokIndex[id] = stokData[id]; });
     }
 
+    function updateStokInfo() {
+        var value = inputBarang.value;
+        var stok = stokIndex[value];
+        var isSales = sumberStok.value === 'sales';
+        if (stok) {
+            if (isSales) {
+                stokInfo.innerHTML = 'Sales: <span style="color:#8b5cf6;font-weight:600">' + (stok.stok_sales || 0) + '</span>';
+            } else {
+                stokInfo.innerHTML = 'Baik: <span style="color:#2563eb;font-weight:600">' + (stok.stok_baik || 0) + '</span> &nbsp; Rusak: <span style="color:#ea580c;font-weight:600">' + (stok.stok_rusak || 0) + '</span>';
+            }
+        } else {
+            stokInfo.innerHTML = '<span style="color:#f59e0b">Belum ada stok</span>';
+        }
+    }
+
     // Init TomSelect
     if (typeof TomSelect !== 'undefined') {
         new TomSelect(inputBarang, {
@@ -207,12 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdownParent: 'body',
             plugins: { clear_button: { title: 'Hapus pilihan' } },
             onChange: function(value) {
-                var stok = stokIndex[value];
-                if (stok) {
-                    stokInfo.innerHTML = 'Baik: <span style="color:#2563eb;font-weight:600">' + stok.stok_baik + '</span> &nbsp; Rusak: <span style="color:#ea580c;font-weight:600">' + stok.stok_rusak + '</span>';
-                } else {
-                    stokInfo.innerHTML = '<span style="color:#f59e0b">Belum ada stok</span>';
-                }
+                updateStokInfo();
             },
             onReady: function() {
                 var c = this.control;
@@ -234,6 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
             new TomSelect(el, { maxItems:1, searchField:['text','value'], dropdownParent:'body', plugins:{clear_button:{title:'Hapus pilihan'}} });
         }
     });
+
+    // Sumber Stok change
+    sumberStok.addEventListener('change', updateStokInfo);
 
     // =========================================
     // TAMBAH BARANG
@@ -280,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             inputBarang.value = '';
         }
         stokInfo.innerHTML = '--';
+        updateStokInfo();
     });
 
     // Enter key langsung tambah

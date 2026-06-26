@@ -71,7 +71,7 @@
                         <th rowspan="2" width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">AWAL</th>
                         <th colspan="3" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-brand-500 dark:text-brand-400">BARANG MASUK</th>
                         <th colspan="1" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-error-700 dark:text-error-500">BARANG KELUAR</th>
-                        <th colspan="2" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-success-700 dark:text-success-500">SISA STOK</th>
+                        <th colspan="3" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-success-700 dark:text-success-500">SISA STOK</th>
                         <th rowspan="2" width="100" class="border-l border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">TOTAL</th>
                     </tr>
                     <tr>
@@ -81,6 +81,7 @@
                         <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">SALES</th>
                         <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">BAIK</th>
                         <th width="100" class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">RUSAK</th>
+                        <th width="100" class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">SALES</th>
                     </tr>
                 </thead>
 
@@ -94,6 +95,7 @@
                             $grandSales = $grandTotals['sales'] ?? 0;
                             $grandBaik = $grandTotals['sisa_baik'] ?? 0;
                             $grandRusak = $grandTotals['sisa_rusak'] ?? 0;
+                            $grandSisaSales = $grandTotals['sisa_sales'] ?? 0;
                             $grandTotal = $grandTotals['total'] ?? 0;
                         @endphp
 
@@ -126,6 +128,9 @@
                                 <span class="text-error-600 dark:text-error-500 font-bold">{{ number_format($d['sisa_rusak']) }}</span>
                             </td>
                             <td class="px-5 py-4 text-center text-sm">
+                                <span class="text-purple-600 dark:text-purple-400 font-bold">{{ number_format($d['sisa_sales']) }}</span>
+                            </td>
+                            <td class="px-5 py-4 text-center text-sm">
                                 <span class="inline-flex items-center rounded-full bg-success-50 px-2.5 py-1 text-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500 font-bold">{{ number_format($d['total']) }}</span>
                             </td>
                         </tr>
@@ -134,7 +139,7 @@
                     @else
 
                         <tr>
-                            <td colspan="11" class="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="12" class="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                                 Tidak ada data
                             </td>
                         </tr>
@@ -154,6 +159,7 @@
                         <td class="px-5 py-3 text-center text-sm text-error-600 dark:text-error-500">{{ number_format($grandSales) }}</td>
                         <td class="px-5 py-3 text-center text-sm text-success-600 dark:text-success-500">{{ number_format($grandBaik) }}</td>
                         <td class="px-5 py-3 text-center text-sm text-error-600 dark:text-error-500">{{ number_format($grandRusak) }}</td>
+                        <td class="px-5 py-3 text-center text-sm text-purple-600 dark:text-purple-400">{{ number_format($grandSisaSales) }}</td>
                         <td class="px-5 py-3 text-center text-sm text-success-600 dark:text-success-500">{{ number_format($grandTotal) }}</td>
                     </tr>
                 </tfoot>

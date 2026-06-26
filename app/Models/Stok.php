@@ -20,6 +20,7 @@ class Stok extends Model
         'barang_id',
         'stok_baik',
         'stok_rusak',
+        'stok_sales',
     ];
 
     protected $casts = [

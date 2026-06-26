@@ -38,7 +38,7 @@ class StokService
 
         // Atomic INSERT with ON CONFLICT DO NOTHING (PostgreSQL)
         DB::statement(
-            'INSERT INTO stok (barang_id, stok_baik, stok_rusak, updated_at) VALUES (?, 0, 0, NOW()) ON CONFLICT (barang_id) DO NOTHING',
+            'INSERT INTO stok (barang_id, stok_baik, stok_rusak, stok_sales, updated_at) VALUES (?, 0, 0, 0, NOW()) ON CONFLICT (barang_id) DO NOTHING',
             [$barangId]
         );
 
@@ -109,16 +109,67 @@ class StokService
         return true;
     }
 
+    public function tambahStokSales(int $barangId, int $qty): bool
+    {
+        $qty = (int) $qty;
+
+        if ($qty < 0) {
+            throw new BusinessException('Jumlah tidak boleh negatif');
+        }
+
+        if ($qty === 0) {
+            return true;
+        }
+
+        $stok = $this->ensureByBarang($barangId);
+
+        DB::statement(
+            'UPDATE stok SET stok_sales = stok_sales + ?, updated_at = NOW() WHERE id = ?',
+            [$qty, (int) $stok['id']]
+        );
+
+        return true;
+    }
+
+    public function kurangStokSales(int $barangId, int $qty): bool
+    {
+        $qty = (int) $qty;
+
+        if ($qty < 0) {
+            throw new BusinessException('Jumlah tidak boleh negatif');
+        }
+
+        if ($qty === 0) {
+            return true;
+        }
+
+        $stok = $this->lockStok($barangId);
+
+        if (!$stok) {
+            throw new BusinessException('Stok barang tidak ditemukan');
+        }
+
+        if ($qty > 0 && (int) $stok['stok_sales'] < $qty) {
+            throw new BusinessException('Stok sales tidak mencukupi');
+        }
+
+        DB::statement(
+            'UPDATE stok SET stok_sales = stok_sales - ?, updated_at = NOW() WHERE id = ?',
+            [$qty, (int) $stok['id']]
+        );
+
+        return true;
+    }
+
     public function mutasiStok(int $barangId, string $tipe, int $qty): void
     {
-        $this->validateMutasi($tipe, $qty);
+        $this->validateMutasiKondisi($tipe, $qty);
 
         $stok = $this->lockStok($barangId);
         if (!$stok) {
             throw new BusinessException('Stok barang tidak ditemukan');
         }
 
-        // Single atomic query: tidak bisa gagal di tengah
         if ($tipe === 'baik_ke_rusak') {
             DB::statement(
                 'UPDATE stok SET stok_baik = stok_baik - ?, stok_rusak = stok_rusak + ?, updated_at = NOW() WHERE id = ?',
@@ -134,7 +185,7 @@ class StokService
 
     public function rollbackStok(int $barangId, string $tipe, int $qty): void
     {
-        $this->validateMutasi($tipe, $qty);
+        $this->validateMutasiKondisi($tipe, $qty);
 
         $stok = $this->lockStok($barangId);
         if (!$stok) {
@@ -142,19 +193,13 @@ class StokService
         }
 
         if ($tipe === 'baik_ke_rusak') {
-            // Mutasi asli: baik -qty, rusak +qty
-            // Rollback: baik +qty, rusak -qty
             $stokBaik = (int) $stok['stok_baik'] + $qty;
             $stokRusak = (int) $stok['stok_rusak'] - $qty;
         } else {
-            // Mutasi asli: rusak -qty, baik +qty
-            // Rollback: rusak +qty, baik -qty
             $stokBaik = (int) $stok['stok_baik'] - $qty;
             $stokRusak = (int) $stok['stok_rusak'] + $qty;
         }
 
-        // Validasi: jika hasil rollback negatif, berarti transaksi lain
-        // sudah mengubah stok secara signifikan sehingga rollback tidak aman.
         if ($stokBaik < 0 || $stokRusak < 0) {
             if ($stokBaik < 0) {
                 throw new BusinessException('Stok baik tidak mencukupi');
@@ -168,7 +213,67 @@ class StokService
         );
     }
 
-    public function adjustStok(int $barangId, int $stokBaikBaru, int $stokRusakBaru): void
+    public function mutasiStokSales(string $tipe, int $barangId, int $qty): void
+    {
+        $this->validateMutasiKanvas($tipe, $qty);
+
+        $stok = $this->lockStok($barangId);
+        if (!$stok) {
+            throw new BusinessException('Stok barang tidak ditemukan');
+        }
+
+        if ($tipe === 'baik_ke_sales') {
+            if ((int) $stok['stok_baik'] < $qty) {
+                throw new BusinessException('Stok baik tidak mencukupi');
+            }
+
+            DB::statement(
+                'UPDATE stok SET stok_baik = stok_baik - ?, stok_sales = stok_sales + ?, updated_at = NOW() WHERE id = ?',
+                [$qty, $qty, (int) $stok['id']]
+            );
+        } else {
+            if ((int) $stok['stok_sales'] < $qty) {
+                throw new BusinessException('Stok sales tidak mencukupi');
+            }
+
+            DB::statement(
+                'UPDATE stok SET stok_sales = stok_sales - ?, stok_baik = stok_baik + ?, updated_at = NOW() WHERE id = ?',
+                [$qty, $qty, (int) $stok['id']]
+            );
+        }
+    }
+
+    public function rollbackMutasiSales(string $tipe, int $barangId, int $qty): void
+    {
+        $this->validateMutasiKanvas($tipe, $qty);
+
+        $stok = $this->lockStok($barangId);
+        if (!$stok) {
+            throw new BusinessException('Stok barang tidak ditemukan');
+        }
+
+        if ($tipe === 'baik_ke_sales') {
+            $stokBaik = (int) $stok['stok_baik'] + $qty;
+            $stokSales = (int) $stok['stok_sales'] - $qty;
+        } else {
+            $stokBaik = (int) $stok['stok_baik'] - $qty;
+            $stokSales = (int) $stok['stok_sales'] + $qty;
+        }
+
+        if ($stokBaik < 0 || $stokSales < 0) {
+            if ($stokBaik < 0) {
+                throw new BusinessException('Stok baik tidak mencukupi');
+            }
+            throw new BusinessException('Stok sales tidak mencukupi');
+        }
+
+        DB::statement(
+            'UPDATE stok SET stok_baik = ?, stok_sales = ?, updated_at = NOW() WHERE id = ?',
+            [$stokBaik, $stokSales, (int) $stok['id']]
+        );
+    }
+
+    public function adjustStok(int $barangId, int $stokBaikBaru, int $stokRusakBaru, int $stokSalesBaru = -1): void
     {
         if ($stokBaikBaru < 0 || $stokRusakBaru < 0) {
             throw new BusinessException('Stok tidak boleh minus');
@@ -180,10 +285,20 @@ class StokService
             throw new BusinessException('Stok barang tidak ditemukan');
         }
 
-        DB::statement(
-            'UPDATE stok SET stok_baik = ?, stok_rusak = ?, updated_at = NOW() WHERE id = ?',
-            [$stokBaikBaru, $stokRusakBaru, (int) $stok['id']]
-        );
+        if ($stokSalesBaru >= 0) {
+            if ($stokSalesBaru < 0) {
+                throw new BusinessException('Stok sales tidak boleh minus');
+            }
+            DB::statement(
+                'UPDATE stok SET stok_baik = ?, stok_rusak = ?, stok_sales = ?, updated_at = NOW() WHERE id = ?',
+                [$stokBaikBaru, $stokRusakBaru, $stokSalesBaru, (int) $stok['id']]
+            );
+        } else {
+            DB::statement(
+                'UPDATE stok SET stok_baik = ?, stok_rusak = ?, updated_at = NOW() WHERE id = ?',
+                [$stokBaikBaru, $stokRusakBaru, (int) $stok['id']]
+            );
+        }
     }
 
     public function setInitialStok(int $barangId, int $stokBaik, int $stokRusak): void
@@ -219,11 +334,14 @@ class StokService
         if (isset($data['stok_rusak']) && (int) $data['stok_rusak'] < 0) {
             throw new BusinessException('Stok rusak tidak boleh minus');
         }
+        if (isset($data['stok_sales']) && (int) $data['stok_sales'] < 0) {
+            throw new BusinessException('Stok sales tidak boleh minus');
+        }
 
         $fields = [];
         $params = [];
 
-        foreach (['stok_baik', 'stok_rusak', 'updated_at'] as $col) {
+        foreach (['stok_baik', 'stok_rusak', 'stok_sales', 'updated_at'] as $col) {
             if (array_key_exists($col, $data)) {
                 $fields[] = "$col = ?";
                 $params[] = $data[$col];
@@ -260,10 +378,21 @@ class StokService
         return Stok::all()->map(fn($s) => $s->toArray())->toArray();
     }
 
-    private function validateMutasi(string $tipe, int $qty): void
+    private function validateMutasiKondisi(string $tipe, int $qty): void
     {
         if (!in_array($tipe, ['baik_ke_rusak', 'rusak_ke_baik'], true)) {
-            throw new BusinessException('Tipe mutasi tidak valid');
+            throw new BusinessException('Tipe mutasi kondisi tidak valid');
+        }
+
+        if ($qty <= 0) {
+            throw new BusinessException('Jumlah mutasi harus lebih dari 0');
+        }
+    }
+
+    private function validateMutasiKanvas(string $tipe, int $qty): void
+    {
+        if (!in_array($tipe, ['baik_ke_sales', 'sales_ke_baik'], true)) {
+            throw new BusinessException('Tipe mutasi kanvas tidak valid');
         }
 
         if ($qty <= 0) {
