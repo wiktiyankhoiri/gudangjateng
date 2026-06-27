@@ -41,22 +41,34 @@ class KartuStokController extends Controller
                     sub.tanggal,
                     sub.surat_jalan,
                     sub.transaksi,
+                    sub.sumber_stok,
                     sub.keterangan,
                     sub.masuk,
-                    sub.keluar
+                    sub.keluar,
+                    sub.saldo_masuk,
+                    sub.saldo_keluar
                 FROM (
                     (
                         SELECT
                             DATE(created_at) as tanggal,
                             '-' as surat_jalan,
                             'Initial Stok' as transaksi,
+                            'Gudang' as sumber_stok,
                             '-' as keterangan,
                             (
-                                COALESCE(qty_baik, 0)
-                                +
-                                COALESCE(qty_rusak, 0)
+                            COALESCE(qty_baik, 0)
+                            +
+                            COALESCE(qty_rusak, 0)
                             ) as masuk,
-                            0 as keluar
+                            0 as keluar,
+                            (
+                            COALESCE(qty_baik, 0)
+                            +
+                            COALESCE(qty_rusak, 0)
+                            ) as saldo_masuk,
+                            0 as saldo_keluar,
+                            created_at as sort_time,
+                            id as sort_id
                         FROM initialstok
                         WHERE barang_id = ? AND created_at >= ? AND created_at < ?
                     )
@@ -70,17 +82,26 @@ class KartuStokController extends Controller
                                 THEN 'Retur Toko'
                                 ELSE 'Barang Masuk'
                             END as transaksi,
+                            'Gudang' as sumber_stok,
                             CASE
                                 WHEN bm.tipe = 'retur'
                                 THEN COALESCE(t.nama_toko, '-')
                                 ELSE COALESCE(p.nama_pabrik, '-')
                             END as keterangan,
                             (
-                                COALESCE(bmd.qty_baik, 0)
-                                +
-                                COALESCE(bmd.qty_rusak, 0)
+                            COALESCE(bmd.qty_baik, 0)
+                            +
+                            COALESCE(bmd.qty_rusak, 0)
                             ) as masuk,
-                            0 as keluar
+                            0 as keluar,
+                            (
+                            COALESCE(bmd.qty_baik, 0)
+                            +
+                            COALESCE(bmd.qty_rusak, 0)
+                            ) as saldo_masuk,
+                            0 as saldo_keluar,
+                            bm.created_at as sort_time,
+                            bm.id as sort_id
                         FROM barang_masuk_detail bmd
                         JOIN barang_masuk bm ON bm.id = bmd.barang_masuk_id
                         LEFT JOIN toko t ON t.id = bm.toko_id
@@ -93,13 +114,27 @@ class KartuStokController extends Controller
                             bk.tanggal,
                             bk.no_surat as surat_jalan,
                             'Barang Keluar' as transaksi,
+                            CASE
+                                WHEN COALESCE(bk.sumber, 'gudang') = 'sales'
+                                THEN 'Sales'
+                                ELSE 'Gudang'
+                            END as sumber_stok,
                             CONCAT(
                                 COALESCE(t.nama_toko, '-'),
-                                ' / ',
-                                COALESCE(sales.nama, '-')
+                                ' | ',
+                                COALESCE(sales.nama, '-'),
+                                CASE
+                                    WHEN bk.keterangan IS NOT NULL AND bk.keterangan != ''
+                                    THEN CONCAT(' | ', bk.keterangan)
+                                    ELSE ''
+                                END
                             ) as keterangan,
                             0 as masuk,
-                            COALESCE(bkd.qty_baik, 0) as keluar
+                            COALESCE(bkd.qty_baik, 0) as keluar,
+                            0 as saldo_masuk,
+                            COALESCE(bkd.qty_baik, 0) as saldo_keluar,
+                            bk.created_at as sort_time,
+                            bk.id as sort_id
                         FROM barang_keluar_detail bkd
                         JOIN barang_keluar bk ON bk.id = bkd.barang_keluar_id
                         LEFT JOIN toko t ON t.id = bk.toko_id
@@ -112,23 +147,54 @@ class KartuStokController extends Controller
                             m.tanggal,
                             m.no_mutasi as surat_jalan,
                             CASE
-                                WHEN md.tipe = 'baik_ke_rusak' THEN 'Mutasi Baik ke Rusak'
-                                WHEN md.tipe = 'rusak_ke_baik' THEN 'Mutasi Rusak ke Baik'
-                                WHEN md.tipe = 'baik_ke_sales' THEN 'Berangkat Kanvas'
-                                WHEN md.tipe = 'sales_ke_baik' THEN 'Sisa Kanvas'
+                                WHEN md.tipe IN ('baik_ke_rusak', 'rusak_ke_baik') THEN 'Mutasi Kondisi'
+                                WHEN md.tipe IN ('baik_ke_sales', 'sales_ke_baik') THEN 'Mutasi Kanvas'
                             END as transaksi,
                             CASE
-                                WHEN md.tipe IN ('baik_ke_sales', 'sales_ke_baik') AND sales_mutasi.id IS NOT NULL
-                                THEN
+                                WHEN md.tipe IN ('baik_ke_sales', 'sales_ke_baik')
+                                THEN 'Sales'
+                                ELSE 'Gudang'
+                            END as sumber_stok,
+                            CASE
+                                WHEN md.tipe IN ('baik_ke_rusak', 'rusak_ke_baik') THEN
                                     CASE
                                         WHEN m.keterangan IS NOT NULL AND m.keterangan != ''
-                                        THEN CONCAT(m.keterangan, ' | Sales: ', sales_mutasi.nama)
-                                        ELSE CONCAT('Sales: ', sales_mutasi.nama)
+                                        THEN CONCAT(
+                                            CASE WHEN md.tipe = 'baik_ke_rusak' THEN 'Baik ke Rusak : '
+                                                 ELSE 'Rusak ke Baik : ' END,
+                                            md.qty, ' | ', m.keterangan
+                                        )
+                                        ELSE CONCAT(
+                                            CASE WHEN md.tipe = 'baik_ke_rusak' THEN 'Baik ke Rusak : '
+                                                 ELSE 'Rusak ke Baik : ' END,
+                                            md.qty
+                                        )
+                                    END
+                                WHEN md.tipe IN ('baik_ke_sales', 'sales_ke_baik') THEN
+                                    CASE
+                                        WHEN m.keterangan IS NOT NULL AND m.keterangan != ''
+                                        THEN CONCAT(
+                                            CASE WHEN md.tipe = 'baik_ke_sales' THEN 'Berangkat Kanvas : '
+                                                 ELSE 'Sisa Kanvas : ' END,
+                                            md.qty, ' | ',
+                                            COALESCE(sales_mutasi.nama, '-'),
+                                            ' | ', m.keterangan
+                                        )
+                                        ELSE CONCAT(
+                                            CASE WHEN md.tipe = 'baik_ke_sales' THEN 'Berangkat Kanvas : '
+                                                 ELSE 'Sisa Kanvas : ' END,
+                                            md.qty, ' | ',
+                                            COALESCE(sales_mutasi.nama, '-')
+                                        )
                                     END
                                 ELSE COALESCE(m.keterangan, '-')
                             END as keterangan,
                             0 as masuk,
-                            0 as keluar
+                            0 as keluar,
+                            0 as saldo_masuk,
+                            0 as saldo_keluar,
+                            m.created_at as sort_time,
+                            m.id as sort_id
                         FROM mutasi_detail md
                         JOIN mutasi m ON m.id = md.mutasi_id
                         LEFT JOIN users sales_mutasi ON sales_mutasi.id = m.sales_id
@@ -140,6 +206,7 @@ class KartuStokController extends Controller
                             ps.tanggal,
                             CONCAT('PS-', ps.id) as surat_jalan,
                             'Penyesuaian Stok' as transaksi,
+                            'Semua' as sumber_stok,
                             COALESCE(ps.alasan, '-') as keterangan,
                             CASE
                                 WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) > 0
@@ -150,12 +217,24 @@ class KartuStokController extends Controller
                                 WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) < 0
                                 THEN ABS(COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0))
                                 ELSE 0
-                            END as keluar
+                            END as keluar,
+                            CASE
+                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) > 0
+                                THEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0))
+                                ELSE 0
+                            END as saldo_masuk,
+                            CASE
+                                WHEN (COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0)) < 0
+                                THEN ABS(COALESCE(ps.selisih_baik, 0) + COALESCE(ps.selisih_rusak, 0) + COALESCE(ps.selisih_sales, 0))
+                                ELSE 0
+                            END as saldo_keluar,
+                            ps.tanggal as sort_time,
+                            ps.id as sort_id
                         FROM penyesuaian_stok ps
                         WHERE ps.barang_id = ? AND ps.tanggal >= ? AND ps.tanggal < ?
                     )
                 ) sub
-                ORDER BY sub.tanggal ASC
+                ORDER BY sub.sort_time ASC, sub.sort_id ASC
             ";
 
             $initParams = [$barangId, $tanggalAwal, $tglAkhir];

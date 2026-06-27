@@ -62,55 +62,91 @@
                 </h5>
                 <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">{{ $barangSelected->kode_barang }}</span>
             </div>
-            <div class="overflow-x-auto"><table class="table-sticky min-w-full">
+            <div class="overflow-x-auto"><table class="min-w-full">
                     <thead>
                         <tr class="border-b border-gray-100 dark:border-gray-800">
-                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-[120px]">TANGGAL</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-[150px]">SURAT JALAN</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-[180px]">TRANSAKSI</th>
-                            <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KETERANGAN</th>
-                            <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-[120px]">MASUK</th>
-                            <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-[120px]">KELUAR</th>
-                            <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 w-[120px]">SALDO</th>
+                            <th class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">TANGGAL</th>
+                            <th class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">SURAT JALAN</th>
+                            <th class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">TRANSAKSI</th>
+                            <th class="px-3 py-2.5 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">STOK</th>
+                            <th class="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KETERANGAN</th>
+                            <th class="px-3 py-2.5 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">MASUK</th>
+                            <th class="px-3 py-2.5 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KELUAR</th>
+                            <th class="px-3 py-2.5 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">SALDO</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         @php $saldo = 0; @endphp
                         @if(!empty($histori))
                             @foreach($histori as $h)
-                            @php $saldo += (int)$h['masuk']; $saldo -= (int)$h['keluar']; @endphp
+                            @php
+                                $saldo += (int)($h['saldo_masuk'] ?? $h['masuk']);
+                                $saldo -= (int)($h['saldo_keluar'] ?? $h['keluar']);
+                                $transaksi = $h['transaksi'] ?? '';
+                                $transaksiClass = 'text-gray-800 dark:text-white/90';
+
+                                if ($transaksi === 'Barang Keluar') {
+                                    $transaksiClass = 'text-error-600 dark:text-error-500';
+                                } elseif (in_array($transaksi, ['Barang Masuk', 'Retur Toko'], true)) {
+                                    $transaksiClass = 'text-brand-500 dark:text-brand-400';
+                                } elseif ($transaksi === 'Mutasi Kondisi') {
+                                    $transaksiClass = 'text-warning-600 dark:text-warning-400';
+                                } elseif ($transaksi === 'Mutasi Kanvas') {
+                                    $transaksiClass = 'text-purple-600 dark:text-purple-400';
+                                }
+                            @endphp
                             <tr>
-                                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ isset($h['tanggal']) ? date('d/m/Y', strtotime($h['tanggal'])) : '-' }}</td>
-                                <td class="px-5 py-4">
-                                    <span class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">{{ $h['surat_jalan'] ?: '-' }}</span>
+                                <td class="px-3 py-2.5 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ isset($h['tanggal']) ? date('d/m/Y', strtotime($h['tanggal'])) : '-' }}</td>
+                                <td class="px-3 py-2.5">
+                                    <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400 whitespace-nowrap">{{ $h['surat_jalan'] ?: '-' }}</span>
                                 </td>
-                                <td class="px-5 py-4 text-sm font-semibold {{ str_starts_with($h['transaksi'], 'Mutasi') ? 'text-warning-600 dark:text-warning-400' : 'text-gray-800 dark:text-white/90' }}">{{ $h['transaksi'] }}</td>
-                                <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">{{ $h['keterangan'] ?: '-' }}</td>
-                                <td class="px-5 py-4 text-center text-sm font-semibold text-brand-500 dark:text-brand-400">{{ $h['masuk'] ? number_format($h['masuk']) : '-' }}</td>
-                                <td class="px-5 py-4 text-center text-sm font-semibold text-error-600 dark:text-error-500">{{ $h['keluar'] ? number_format($h['keluar']) : '-' }}</td>
-                                <td class="px-5 py-4 text-center">
-                                    <span class="inline-flex items-center rounded-full bg-success-50 px-2.5 py-1 text-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">{{ number_format($saldo) }}</span>
+                                <td class="px-3 py-2.5 text-xs font-semibold {{ $transaksiClass }} whitespace-nowrap">{{ $h['transaksi'] }}</td>
+                                <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ ($h['sumber_stok'] ?? '') === 'Sales' ? 'bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-400' : 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400' }}">{{ $h['sumber_stok'] ?? '-' }}</span>
+                                </td>
+                                <td class="px-3 py-2.5 text-xs text-gray-500 dark:text-gray-400">{{ $h['keterangan'] ?: '-' }}</td>
+                                <td class="px-3 py-2.5 text-center text-xs font-semibold text-brand-500 dark:text-brand-400 whitespace-nowrap">{{ $h['masuk'] ? number_format($h['masuk']) : '-' }}</td>
+                                <td class="px-3 py-2.5 text-center text-xs font-semibold text-error-600 dark:text-error-500 whitespace-nowrap">{{ $h['keluar'] ? number_format($h['keluar']) : '-' }}</td>
+                                <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                                    <span class="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">{{ number_format($saldo) }}</span>
                                 </td>
                             </tr>
                             @endforeach
                         @else
                             <tr>
-                                <td colspan="7" class="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400">Tidak ada riwayat</td>
+                                <td colspan="8" class="px-3 py-6 text-center text-xs text-gray-500 dark:text-gray-400">Tidak ada riwayat</td>
                             </tr>
                         @endif
                     </tbody>
                     @if(!empty($histori))
                     <tfoot>
                         <tr class="bg-gray-50 dark:bg-gray-800 font-semibold">
-                            <td colspan="4" class="px-5 py-3 text-right text-sm text-gray-800 dark:text-white/90">TOTAL</td>
-                            <td class="px-5 py-3 text-center text-sm text-brand-500 dark:text-brand-400">{{ number_format($totalMasuk ?? 0) }}</td>
-                            <td class="px-5 py-3 text-center text-sm text-error-600 dark:text-error-500">{{ number_format($totalKeluar ?? 0) }}</td>
-                            <td class="px-5 py-3 text-center text-sm text-success-600 dark:text-success-500">
-                                <div>{{ number_format($saldoAkhir ?? 0) }}</div>
-                                <div class="mt-0.5 text-xs font-normal flex justify-center text-gray-500 dark:text-gray-400">
-                                    <span class="text-brand-500 dark:text-brand-400">Baik <strong>{{ number_format($stokBaik ?? 0) }}</strong></span>
-                                    <span class="text-error-500 dark:text-error-400 ml-2">Rusak <strong>{{ number_format($stokRusak ?? 0) }}</strong></span>
-                                    <span class="text-purple-500 dark:text-purple-400 ml-2">Sales <strong>{{ number_format($stokSales ?? 0) }}</strong></span>
+                            <td colspan="5" class="px-3 py-2.5 text-right text-xs text-gray-800 dark:text-white/90">TOTAL</td>
+                            <td class="px-3 py-2.5 text-center text-xs text-brand-500 dark:text-brand-400">{{ number_format($totalMasuk ?? 0) }}</td>
+                            <td class="px-3 py-2.5 text-center text-xs text-error-600 dark:text-error-500">{{ number_format($totalKeluar ?? 0) }}</td>
+                            <td class="px-3 py-2.5 text-center text-xs text-gray-400 dark:text-gray-500">-</td>
+                        </tr>
+                        <tr class="bg-gray-50 dark:bg-gray-800 font-semibold border-t border-gray-200 dark:border-gray-700">
+                            <td colspan="5" class="px-3 py-2.5 text-right text-xs text-gray-800 dark:text-white/90">SALDO AKHIR</td>
+                            <td class="px-3 py-2.5 text-center text-xs text-gray-400 dark:text-gray-500"></td>
+                            <td class="px-3 py-2.5 text-center text-xs text-gray-400 dark:text-gray-500"></td>
+                            <td class="px-3 py-2.5 text-center text-xs font-bold text-success-600 dark:text-success-500">{{ number_format($saldoAkhir ?? 0) }}</td>
+                        </tr>
+                        <tr class="bg-gray-50/50 dark:bg-gray-800/50">
+                            <td colspan="8" class="px-3 py-2.5 text-xs text-gray-500 dark:text-gray-400">
+                                <div class="flex items-center justify-end gap-5">
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                        Stok Baik: <strong class="text-brand-600 dark:text-brand-400">{{ number_format($stokBaik ?? 0) }}</strong>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-error-500"></span>
+                                        Stok Rusak: <strong class="text-error-600 dark:text-error-500">{{ number_format($stokRusak ?? 0) }}</strong>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                                        Stok Sales: <strong class="text-purple-600 dark:text-purple-400">{{ number_format($stokSales ?? 0) }}</strong>
+                                    </span>
                                 </div>
                             </td>
                         </tr>
