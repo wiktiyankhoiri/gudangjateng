@@ -5,6 +5,32 @@
 
     <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
+            <svg class="fill-gray-800 dark:fill-white/90" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.378 1.602a.75.75 0 00-.756 0L3 6.632l9 5.25 9-5.25-8.622-5.03zM21.75 7.93l-9 5.25v9l8.628-5.032a.75.75 0 00.372-.648V7.93zM11.25 22.18v-9l-9-5.25v8.57a.75.75 0 00.372.648l8.628 5.032z"/>
+            </svg>
+        </div>
+        <div class="mt-5">
+            <div class="flex items-stretch gap-3">
+                <div class="flex-1 text-center min-w-0">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Stok Baik</span>
+                    <h4 class="mt-2 text-title-sm font-bold text-success-600 dark:text-success-500 whitespace-nowrap">{{ number_format($totalStokBaik) }}</h4>
+                </div>
+                <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
+                <div class="flex-1 text-center min-w-0">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Stok Rusak</span>
+                    <h4 class="mt-2 text-title-sm font-bold text-error-600 dark:text-error-500 whitespace-nowrap">{{ number_format($totalStokRusak) }}</h4>
+                </div>
+                <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
+                <div class="flex-1 text-center min-w-0">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Stok Sales</span>
+                    <h4 class="mt-2 text-title-sm font-bold text-purple-600 dark:text-purple-400 whitespace-nowrap">{{ number_format($totalStokSales) }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
             <svg class="fill-gray-800 dark:fill-white/90" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C12.4142 2 12.75 2.33579 12.75 2.75V13.6893L16.9697 9.46967C17.2626 9.17678 17.7374 9.17678 18.0303 9.46967C18.3232 9.76256 18.3232 10.2374 18.0303 10.5303L12.5303 16.0303C12.2374 16.3232 11.7626 16.3232 11.4697 16.0303L5.96967 10.5303C5.67678 10.2374 5.67678 9.76256 5.96967 9.46967C6.26256 9.17678 6.73744 9.17678 7.03033 9.46967L11.25 13.6893V2.75C11.25 2.33579 11.5858 2 12 2ZM4.25 19C4.25 18.5858 4.58579 18.25 5 18.25H19C19.4142 18.25 19.75 18.5858 19.75 19C19.75 19.4142 19.4142 19.75 19 19.75H5C4.58579 19.75 4.25 19.4142 4.25 19Z"/>
             </svg>
@@ -40,27 +66,6 @@
                 </svg>
                 transaksi
             </span>
-        </div>
-    </div>
-
-    <div class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
-            <svg class="fill-gray-800 dark:fill-white/90" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.378 1.602a.75.75 0 00-.756 0L3 6.632l9 5.25 9-5.25-8.622-5.03zM21.75 7.93l-9 5.25v9l8.628-5.032a.75.75 0 00.372-.648V7.93zM11.25 22.18v-9l-9-5.25v8.57a.75.75 0 00.372.648l8.628 5.032z"/>
-            </svg>
-        </div>
-        <div class="mt-5">
-            <div class="flex items-stretch gap-3">
-                <div class="flex-1 text-center">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Stok Baik</span>
-                    <h4 class="mt-2 text-title-sm font-bold text-success-600 dark:text-success-500">{{ number_format($totalStokBaik) }}</h4>
-                </div>
-                <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
-                <div class="flex-1 text-center">
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Stok Rusak</span>
-                    <h4 class="mt-2 text-title-sm font-bold text-error-600 dark:text-error-500">{{ number_format($totalStokRusak) }}</h4>
-                </div>
-            </div>
         </div>
     </div>
 
