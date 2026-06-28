@@ -349,7 +349,7 @@ if ($isDashboard) $alpineSelected = 'Beranda';
                 Gudang Jateng
             </h3>
             <p class="mb-4 text-gray-500 text-theme-sm dark:text-gray-400">
-                Versi 1.1 &copy; {{ date('Y') }}
+                Versi 2.0 &copy; {{ date('Y') }}
             </p>
             <a
                 href="https://wa.me/6281215966784"
