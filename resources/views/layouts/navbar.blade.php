@@ -48,12 +48,18 @@
                             <div>
                                 <div class="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-gray-400 bg-gray-50 dark:bg-gray-800 dark:text-gray-400">Barang</div>
                                 <template x-for="item in barang" :key="'b-'+item.id">
-                                    <div @click="goToBarang(item)" @mouseenter="activeItem = item; item._type='barang'" x-bind:class="activeItem && activeItem._type==='barang' && activeItem.id===item.id ? 'bg-gray-50 dark:bg-white/[0.03]' : ''" class="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]">
-                                        <span class="inline-flex items-center flex-shrink-0 rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-400" x-text="item['kode_barang']"></span>
-                                        <span class="flex-1 text-sm font-medium text-gray-800 dark:text-white/90 truncate" x-text="item['nama_barang']"></span>
-                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Baik: <span class="font-semibold text-success-600 dark:text-success-400" x-text="item.stok_baik || 0"></span></span>
-                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Rusak: <span class="font-semibold text-error-600 dark:text-error-400" x-text="item.stok_rusak || 0"></span></span>
-                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Sales: <span class="font-semibold text-purple-600 dark:text-purple-400" x-text="item.stok_sales || 0"></span></span>
+                                    <div @click="goToBarang(item)" @mouseenter="activeItem = item; item._type='barang'" x-bind:class="activeItem && activeItem._type==='barang' && activeItem.id===item.id ? 'bg-gray-50 dark:bg-white/[0.03]' : ''" class="flex flex-col gap-1 px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+                                        <div class="flex items-start gap-2">
+                                            <span class="inline-flex items-center flex-shrink-0 rounded-md bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-400" x-text="item['kode_barang']"></span>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-sm font-medium text-gray-800 dark:text-white/90 leading-snug" x-text="item['nama_barang']"></div>
+                                                <div class="flex items-center gap-3 mt-0.5">
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">Baik: <span class="font-semibold text-success-600 dark:text-success-400" x-text="item.stok_baik || 0"></span></span>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">Rusak: <span class="font-semibold text-error-600 dark:text-error-400" x-text="item.stok_rusak || 0"></span></span>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">Sales: <span class="font-semibold text-purple-600 dark:text-purple-400" x-text="item.stok_sales || 0"></span></span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -126,19 +132,25 @@
                                         @click="goToBarang(item)"
                                         @mouseenter="activeItem = item; item._type = 'barang'"
                                         x-bind:class="activeItem && activeItem._type==='barang' && activeItem.id===item.id ? 'bg-gray-50 dark:bg-white/[0.03]' : ''"
-                                        class="flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
+                                        class="flex flex-col gap-1 px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/[0.03]"
                                     >
-                                        <span class="inline-flex items-center flex-shrink-0 rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-400" x-text="item['kode_barang']"></span>
-                                        <span class="flex-1 text-sm font-medium text-gray-800 dark:text-white/90 truncate" x-text="item['nama_barang']"></span>
-                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                                            Baik: <span class="font-semibold text-success-600 dark:text-success-400" x-text="item.stok_baik || 0"></span>
-                                        </span>
-                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                                            Rusak: <span class="font-semibold text-error-600 dark:text-error-400" x-text="item.stok_rusak || 0"></span>
-                                        </span>
-                                        <span class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                                            Sales: <span class="font-semibold text-purple-600 dark:text-purple-400" x-text="item.stok_sales || 0"></span>
-                                        </span>
+                                        <div class="flex items-start gap-2">
+                                            <span class="inline-flex items-center flex-shrink-0 rounded-md bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-400" x-text="item['kode_barang']"></span>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-sm font-medium text-gray-800 dark:text-white/90 leading-snug" x-text="item['nama_barang']"></div>
+                                                <div class="flex items-center gap-3 mt-0.5">
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                        Baik: <span class="font-semibold text-success-600 dark:text-success-400" x-text="item.stok_baik || 0"></span>
+                                                    </span>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                        Rusak: <span class="font-semibold text-error-600 dark:text-error-400" x-text="item.stok_rusak || 0"></span>
+                                                    </span>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                        Sales: <span class="font-semibold text-purple-600 dark:text-purple-400" x-text="item.stok_sales || 0"></span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
