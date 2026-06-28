@@ -40,7 +40,7 @@ class LaporanBarangMasukController extends Controller
             $query->where('tanggal', '<=', $tanggalAkhir);
         }
 
-        $data = $query->orderBy('tanggal', 'DESC')->paginate(50);
+        $data = $query->orderBy('tanggal', 'DESC')->orderBy('id', 'DESC')->paginate(50);
 
         return view('laporan.laporan-barang-masuk', [
             'title' => 'Laporan Barang Masuk',

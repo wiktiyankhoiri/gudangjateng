@@ -41,7 +41,7 @@ class LaporanBarangKeluarController extends Controller
             $query->where('barang_keluar.tanggal', '<=', $tanggalAkhir);
         }
 
-        $data = $query->orderBy('barang_keluar.tanggal', 'DESC')->paginate(50);
+        $data = $query->orderBy('barang_keluar.tanggal', 'DESC')->orderBy('barang_keluar.id', 'DESC')->paginate(50);
 
         $salesList = User::where('role', 'sales')->orderBy('nama', 'ASC')->get();
 
