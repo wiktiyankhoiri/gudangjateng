@@ -76,6 +76,18 @@
                     <p class="mt-1 text-xs text-error-500">{{ $message }}</p>
                 @enderror
             </div>
+            <div class="flex items-center gap-2">
+                <input
+                    type="checkbox"
+                    id="remember"
+                    name="remember"
+                    value="1"
+                    class="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-800"
+                />
+                <label for="remember" class="text-sm text-gray-700 dark:text-gray-400 cursor-pointer select-none">
+                    Ingat Saya
+                </label>
+            </div>
             <div>
                 <button
                     type="submit"

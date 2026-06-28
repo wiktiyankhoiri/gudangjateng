@@ -38,7 +38,7 @@ class LoginController extends Controller
                 ->with('error', "Akun diblokir sementara. Coba lagi dalam {$remaining} menit.");
         }
 
-        if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']])) {
+        if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             // Reset login attempts
