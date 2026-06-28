@@ -15,5 +15,14 @@
       "keystoreAlias": null,
       "keystoreAliasPassword": null
     }
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1000,
+      "launchAutoHide": true,
+      "backgroundColor": "#FFFFFF",
+      "androidScaleType": "CENTER_INSIDE",
+      "showSpinner": false
+    }
   }
 }

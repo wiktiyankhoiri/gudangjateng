@@ -543,3 +543,21 @@
 .dark .numInputWrapper span svg path {
   fill: #9ca3af;
 }
+
+.network-banner {
+  transform: translateY(0);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.network-banner.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+.network-banner--offline {
+  background: #dc2626;
+  color: #fff;
+}
+.network-banner--online {
+  background: #16a34a;
+  color: #fff;
+}

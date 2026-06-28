@@ -20,8 +20,13 @@
     "dependencies": {
         "@alpinejs/persist": "^3.15.12",
         "@capacitor/android": "^8.4.1",
+        "@capacitor/app": "^8.1.0",
         "@capacitor/cli": "^8.4.1",
         "@capacitor/core": "^8.4.1",
+        "@capacitor/dialog": "^8.0.1",
+        "@capacitor/network": "^8.0.1",
+        "@capacitor/splash-screen": "^8.0.1",
+        "@capacitor/status-bar": "^8.0.2",
         "apexcharts": "^5.13.0",
         "flatpickr": "^4.6.13",
         "playwright": "^1.60.0",

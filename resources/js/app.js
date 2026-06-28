@@ -49,3 +49,11 @@ if (window.axios?.defaults?.headers?.common) {
         window.axios.defaults.headers.common['X-Capacitor'] = 'true';
     }
 }
+
+// Capacitor Native Modules — hanya jalan di Android native
+import { Capacitor } from '@capacitor/core';
+import { initializeCapacitor } from './capacitor/index';
+
+if (Capacitor.isNativePlatform()) {
+    initializeCapacitor();
+}
