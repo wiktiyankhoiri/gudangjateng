@@ -52,8 +52,9 @@ if (window.axios?.defaults?.headers?.common) {
 
 // Capacitor Native Modules — hanya jalan di Android native
 import { Capacitor } from '@capacitor/core';
-import { initializeCapacitor } from './capacitor/index';
+import { initializeCapacitor, getStatusBarUpdater } from './capacitor/index';
 
 if (Capacitor.isNativePlatform()) {
     initializeCapacitor();
+    window.__updateStatusBar = getStatusBarUpdater();
 }

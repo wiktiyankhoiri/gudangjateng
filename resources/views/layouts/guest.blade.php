@@ -10,10 +10,10 @@
         <link rel="shortcut icon" href="{{ asset('images/favicon.png') }}">
         <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon.png') }}">
         <link rel="manifest" href="{{ asset('manifest.json') }}">
-        <meta name="theme-color" content="#0A1633">
+        <meta name="theme-color" content="#101828" id="themeColorMeta">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="GudangJateng">
 
         @vite(['resources/css/app.css'])

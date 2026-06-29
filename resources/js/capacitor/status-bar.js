@@ -1,7 +1,11 @@
-import { StatusBar, Style } from '@capacitor/status-bar';
+// Status bar mengikuti default Capacitor + Theme.AppCompat.DayNight
+// Icon warna otomatis berubah sesuai sistem dark/light mode via Android native
+// Tidak perlu intervensi JavaScript
 
 export async function setupStatusBar() {
-    await StatusBar.setStyle({ style: Style.Light });
-    await StatusBar.setBackgroundColor({ color: '#0A1633' });
-    await StatusBar.setOverlaysWebView({ overlay: false });
+    // Default Capacitor — tidak perlu action
+}
+
+export async function updateStatusBar() {
+    // Default Capacitor — tidak perlu action
 }
