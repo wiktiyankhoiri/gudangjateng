@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AuditLog;
 use App\Services\DatabaseBackupService;
 
@@ -14,7 +13,7 @@ class BackupController extends Controller
     {
         $this->backupPath = storage_path('app/backups');
 
-        if (!is_dir($this->backupPath)) {
+        if (! is_dir($this->backupPath)) {
             mkdir($this->backupPath, 0755, true);
         }
     }
@@ -22,7 +21,7 @@ class BackupController extends Controller
     protected function requireAdminOrAudit(): void
     {
         $role = auth()->user()->role;
-        if (!in_array($role, ['admin', 'audit', 'super_admin'])) {
+        if (! in_array($role, ['admin', 'audit', 'super_admin'])) {
             abort(404, 'Akses ditolak');
         }
     }
@@ -44,7 +43,7 @@ class BackupController extends Controller
         $lastBackup = null;
         $totalSize = 0;
 
-        if (!empty($backups)) {
+        if (! empty($backups)) {
             $lastBackup = $backups[0];
             foreach ($backups as $b) {
                 $totalSize += $b['size'];
@@ -65,8 +64,8 @@ class BackupController extends Controller
         $this->requireAdminOrAudit();
 
         try {
-            $filename = 'gudangjateng-backup-' . date('Y-m-d-His') . '.sql';
-            $filepath = $this->backupPath . '/' . $filename;
+            $filename = 'gudangjateng-backup-'.date('Y-m-d-His').'.sql';
+            $filepath = $this->backupPath.'/'.$filename;
 
             $sql = app(DatabaseBackupService::class)->generateDump();
 
@@ -85,7 +84,7 @@ class BackupController extends Controller
                 foreach ($toDelete as $oldBackup) {
                     if (file_exists($oldBackup['path'])) {
                         unlink($oldBackup['path']);
-                        \Log::info('Backup rotation: hapus ' . $oldBackup['filename']);
+                        \Log::info('Backup rotation: hapus '.$oldBackup['filename']);
                     }
                 }
             }
@@ -96,15 +95,15 @@ class BackupController extends Controller
                 'success' => true,
                 'message' => 'Backup berhasil',
                 'filename' => $filename,
-                'downloadUrl' => route('pengaturan.backup.download', ['filename' => $filename])
+                'downloadUrl' => route('pengaturan.backup.download', ['filename' => $filename]),
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Backup failed: ' . $e->getMessage());
+            \Log::error('Backup failed: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Backup database gagal diproses.'
+                'message' => 'Backup database gagal diproses.',
             ]);
         }
     }
@@ -113,9 +112,9 @@ class BackupController extends Controller
     {
         $this->requireAdminOrAudit();
 
-        $filepath = $this->backupPath . '/' . basename($filename);
+        $filepath = $this->backupPath.'/'.basename($filename);
 
-        if (!file_exists($filepath)) {
+        if (! file_exists($filepath)) {
             return redirect()->route('pengaturan.backup.index')->with('error', 'File tidak ditemukan');
         }
         if (filesize($filepath) === 0) {
@@ -129,9 +128,9 @@ class BackupController extends Controller
     {
         $this->requireAdminOnly();
 
-        $filepath = $this->backupPath . '/' . basename($filename);
+        $filepath = $this->backupPath.'/'.basename($filename);
 
-        if (!file_exists($filepath)) {
+        if (! file_exists($filepath)) {
             return redirect()->route('pengaturan.backup.index')->with('error', 'File tidak ditemukan');
         }
 
@@ -145,16 +144,18 @@ class BackupController extends Controller
     {
         $backups = [];
 
-        if (!is_dir($this->backupPath)) {
+        if (! is_dir($this->backupPath)) {
             return $backups;
         }
 
         $files = scandir($this->backupPath);
 
         foreach ($files as $file) {
-            if ($file === '.' || $file === '..') continue;
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
 
-            $filepath = $this->backupPath . '/' . $file;
+            $filepath = $this->backupPath.'/'.$file;
 
             if (is_file($filepath) && preg_match('/\.sql$/', $file)) {
                 $backups[] = [
@@ -190,14 +191,14 @@ class BackupController extends Controller
                 'created_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Failed to log backup: ' . $e->getMessage());
+            \Log::error('Failed to log backup: '.$e->getMessage());
         }
     }
 
     private function getBackupTimestamp(string $filename, string $filepath): int
     {
-        if (preg_match('/^(?:gudangjateng-)?(?:safety-)?backup-(\d{4}-\d{2}-\d{2})-(\d{6})\.sql$/', $filename, $matches)) {
-            $timestamp = strtotime($matches[1] . ' ' . substr($matches[2], 0, 2) . ':' . substr($matches[2], 2, 2) . ':' . substr($matches[2], 4, 2));
+        if (preg_match('/^(?:safety-)?gudangjateng-backup-(\d{4}-\d{2}-\d{2})-(\d{6})\.sql$/', $filename, $matches)) {
+            $timestamp = strtotime($matches[1].' '.substr($matches[2], 0, 2).':'.substr($matches[2], 2, 2).':'.substr($matches[2], 4, 2));
 
             if ($timestamp !== false) {
                 return $timestamp;

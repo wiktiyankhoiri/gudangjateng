@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\DatabaseBackupService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RestoreController extends Controller
 {
@@ -16,7 +16,7 @@ class RestoreController extends Controller
     {
         $this->backupPath = storage_path('app/backups');
 
-        if (!is_dir($this->backupPath)) {
+        if (! is_dir($this->backupPath)) {
             mkdir($this->backupPath, 0755, true);
         }
     }
@@ -60,9 +60,9 @@ class RestoreController extends Controller
             return redirect()->route('pengaturan.backup.restore')->with('error', 'Pilih file backup');
         }
 
-        $filepath = $this->backupPath . '/' . basename($backupFile);
+        $filepath = $this->backupPath.'/'.basename($backupFile);
 
-        if (!file_exists($filepath)) {
+        if (! file_exists($filepath)) {
             return redirect()->route('pengaturan.backup.restore')->with('error', 'File backup tidak ditemukan');
         }
 
@@ -73,9 +73,9 @@ class RestoreController extends Controller
 
         try {
             // Step 1: Create safety backup before restore
-            $safetyFilename = 'safety-backup-' . date('Y-m-d-His') . '.sql';
+            $safetyFilename = 'safety-gudangjateng-backup-'.date('Y-m-d-His').'.sql';
             $safetySql = $service->generateDump();
-            file_put_contents($this->backupPath . '/' . $safetyFilename, $safetySql);
+            file_put_contents($this->backupPath.'/'.$safetyFilename, $safetySql);
 
             // Step 2: Execute restore (atomic — all in one transaction)
             $result = $service->restore($filepath);
@@ -83,11 +83,12 @@ class RestoreController extends Controller
             // Step 3: Log the result
             $this->logRestore($backupFile, 'success', "Restore: {$result['successQueries']} berhasil, {$result['failedQueries']} gagal");
 
-            $message = 'Restore berhasil. Safety backup: ' . $safetyFilename;
+            $message = 'Restore berhasil. Safety backup: '.$safetyFilename;
 
             if ($result['rolledBack']) {
                 // Restore was rolled back — session is still intact (DB unchanged)
                 $message .= " | ⚠️ Restore di-rollback karena {$result['failedQueries']} query gagal.";
+
                 return redirect()->route('pengaturan.backup.restore')
                     ->with('warning', $message)
                     ->with('restore_errors', $result['errors']);
@@ -102,12 +103,14 @@ class RestoreController extends Controller
                 if ($result['failedQueries'] > 0) {
                     $message .= " | ⚠️ {$result['failedQueries']} query gagal.";
                     session()->flash('warning', $message);
+
                     return redirect()->route('pengaturan.backup.restore')
                         ->with('restore_errors', $result['errors']);
                 }
 
-                $message .= " | ✅ Semua berhasil.";
+                $message .= ' | ✅ Semua berhasil.';
                 session()->flash('success', $message);
+
                 return redirect()->route('pengaturan.backup.restore');
             }
 
@@ -115,25 +118,33 @@ class RestoreController extends Controller
             return redirect()->route('login', ['restore' => 'success']);
 
         } catch (\Throwable $e) {
-            \Log::error('Restore failed: ' . $e->getMessage());
-            return redirect()->route('pengaturan.backup.restore')->with('error', 'Restore gagal: ' . $e->getMessage());
+            \Log::error('Restore failed: '.$e->getMessage());
+
+            return redirect()->route('pengaturan.backup.restore')->with('error', 'Restore gagal: '.$e->getMessage());
         }
     }
 
     private function getBackupList(): array
     {
         $backups = [];
-        if (!is_dir($this->backupPath)) return $backups;
+        if (! is_dir($this->backupPath)) {
+            return $backups;
+        }
 
         foreach (scandir($this->backupPath) as $file) {
-            if ($file === '.' || $file === '..') continue;
-            $filepath = $this->backupPath . '/' . $file;
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            $filepath = $this->backupPath.'/'.$file;
             if (is_file($filepath) && preg_match('/\.sql$/', $file)) {
                 $backups[] = ['filename' => $file, 'size' => filesize($filepath), 'created' => $this->getBackupTimestamp($file, $filepath), 'path' => $filepath];
             }
         }
 
-        usort($backups, function($a, $b) { return $b['created'] - $a['created']; });
+        usort($backups, function ($a, $b) {
+            return $b['created'] - $a['created'];
+        });
+
         return $backups;
     }
 
@@ -150,14 +161,14 @@ class RestoreController extends Controller
                 'created_at' => now(),
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Failed to log restore: ' . $e->getMessage());
+            \Log::error('Failed to log restore: '.$e->getMessage());
         }
     }
 
     private function getBackupTimestamp(string $filename, string $filepath): int
     {
-        if (preg_match('/^(?:gudangjateng-)?(?:safety-)?backup-(\d{4}-\d{2}-\d{2})-(\d{6})\.sql$/', $filename, $matches)) {
-            $timestamp = strtotime($matches[1] . ' ' . substr($matches[2], 0, 2) . ':' . substr($matches[2], 2, 2) . ':' . substr($matches[2], 4, 2));
+        if (preg_match('/^(?:safety-)?gudangjateng-backup-(\d{4}-\d{2}-\d{2})-(\d{6})\.sql$/', $filename, $matches)) {
+            $timestamp = strtotime($matches[1].' '.substr($matches[2], 0, 2).':'.substr($matches[2], 2, 2).':'.substr($matches[2], 4, 2));
 
             if ($timestamp !== false) {
                 return $timestamp;
