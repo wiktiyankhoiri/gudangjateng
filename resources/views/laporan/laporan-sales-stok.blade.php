@@ -67,18 +67,21 @@
                     <tr>
                         <th rowspan="2" width="60" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">NO</th>
                         <th rowspan="2" width="140" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">KODE</th>
-                        <th rowspan="2" width="300" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">NAMA BARANG</th>
+                        <th rowspan="2" width="300" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 whitespace-nowrap">NAMA BARANG</th>
                         <th rowspan="2" width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">AWAL</th>
-                        <th colspan="3" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-brand-500 dark:text-brand-400">BARANG MASUK</th>
-                        <th colspan="1" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-error-700 dark:text-error-500">BARANG KELUAR</th>
+                        <th colspan="4" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-brand-500 dark:text-brand-400">BARANG MASUK</th>
+                        <th colspan="3" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-error-700 dark:text-error-500">BARANG KELUAR</th>
                         <th colspan="3" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-semibold text-success-700 dark:text-success-500">SISA STOK</th>
                         <th rowspan="2" width="100" class="border-l border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">TOTAL</th>
                     </tr>
                     <tr>
                         <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">PABRIK</th>
                         <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">RETUR</th>
+                        <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">LAIN2X</th>
                         <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">TOTAL</th>
                         <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">SALES</th>
+                        <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">LAIN2X</th>
+                        <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">TOTAL</th>
                         <th width="100" class="border-r border-gray-200 dark:border-gray-700 px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">BAIK</th>
                         <th width="100" class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">RUSAK</th>
                         <th width="100" class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400 ">SALES</th>
@@ -91,8 +94,11 @@
                             $grandAwal = $grandTotals['awal'] ?? 0;
                             $grandPabrik = $grandTotals['pabrik'] ?? 0;
                             $grandRetur = $grandTotals['retur'] ?? 0;
+                            $grandLainTambah = $grandTotals['lain_tambah'] ?? 0;
                             $grandMasuk = $grandTotals['total_masuk'] ?? 0;
                             $grandSales = $grandTotals['sales'] ?? 0;
+                            $grandLainKurang = $grandTotals['lain_kurang'] ?? 0;
+                            $grandTotalKeluar = $grandTotals['total_keluar'] ?? 0;
                             $grandBaik = $grandTotals['sisa_baik'] ?? 0;
                             $grandRusak = $grandTotals['sisa_rusak'] ?? 0;
                             $grandSisaSales = $grandTotals['sisa_sales'] ?? 0;
@@ -101,45 +107,28 @@
 
                         @foreach($data as $i => $d)
                         <tr class="border-b border-gray-100 dark:border-gray-800">
-                            <td class="px-5 py-4 text-center text-sm text-gray-700 dark:text-gray-400">{{ ($data->currentPage() - 1) * $data->perPage() + $i + 1 }}</td>
-                            <td class="px-5 py-4 text-center text-sm text-gray-700 dark:text-gray-400">
-                                <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">{{ esc($d['kode_barang']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-sm text-gray-700 dark:text-gray-400">
-                                <span class="font-semibold">{{ esc($d['nama_barang']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm font-bold text-gray-700 dark:text-gray-400">{{ number_format($d['awal']) }}</td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="text-brand-500 dark:text-brand-400 font-bold">{{ number_format($d['pabrik']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="text-warning-600 dark:text-warning-400 font-bold">{{ number_format($d['retur']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-500 dark:bg-brand-500/15 dark:text-brand-400 font-bold">{{ number_format($d['total_masuk']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="text-error-600 dark:text-error-500 font-bold">{{ number_format($d['sales']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="text-success-600 dark:text-success-500 font-bold">{{ number_format($d['sisa_baik']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="text-error-600 dark:text-error-500 font-bold">{{ number_format($d['sisa_rusak']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="text-purple-600 dark:text-purple-400 font-bold">{{ number_format($d['sisa_sales']) }}</span>
-                            </td>
-                            <td class="px-5 py-4 text-center text-sm">
-                                <span class="inline-flex items-center rounded-full bg-success-50 px-2.5 py-1 text-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500 font-bold">{{ number_format($d['total']) }}</span>
-                            </td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-gray-700 dark:text-gray-400">{{ ($data->currentPage() - 1) * $data->perPage() + $i + 1 }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-gray-700 dark:text-gray-400">{{ esc($d['kode_barang']) }}</td>
+                            <td class="px-5 py-4 text-xs font-medium text-gray-700 dark:text-gray-400 whitespace-nowrap">{{ esc($d['nama_barang']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-gray-700 dark:text-gray-400">{{ number_format($d['awal']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-brand-500 dark:text-brand-400">{{ number_format($d['pabrik']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-warning-600 dark:text-warning-400">{{ number_format($d['retur']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-purple-600 dark:text-purple-400">{{ number_format($d['lain_tambah']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-gray-700 dark:text-gray-400">{{ number_format($d['total_masuk']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-error-600 dark:text-error-500">{{ number_format($d['sales']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-error-600 dark:text-error-500">{{ number_format($d['lain_kurang']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-gray-700 dark:text-gray-400">{{ number_format($d['total_keluar']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-success-600 dark:text-success-500">{{ number_format($d['sisa_baik']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-error-600 dark:text-error-500">{{ number_format($d['sisa_rusak']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-purple-600 dark:text-purple-400">{{ number_format($d['sisa_sales']) }}</td>
+                            <td class="px-5 py-4 text-center text-xs font-medium text-success-600 dark:text-success-500">{{ number_format($d['total']) }}</td>
                         </tr>
                         @endforeach
 
                     @else
 
                         <tr>
-                            <td colspan="12" class="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="15" class="px-5 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                                 Tidak ada data
                             </td>
                         </tr>
@@ -147,24 +136,7 @@
                     @endif
                 </tbody>
 
-                @if($data->isNotEmpty())
 
-                <tfoot>
-                    <tr class="bg-gray-50 dark:bg-gray-800 font-semibold">
-                        <td colspan="3" class="px-5 py-3 text-end text-sm text-gray-700 dark:text-gray-400">TOTAL KESELURUHAN</td>
-                        <td class="px-5 py-3 text-center text-sm text-gray-700 dark:text-gray-400">{{ number_format($grandAwal) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-brand-500 dark:text-brand-400">{{ number_format($grandPabrik) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-warning-600 dark:text-warning-400">{{ number_format($grandRetur) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-blue-light-500">{{ number_format($grandMasuk) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-error-600 dark:text-error-500">{{ number_format($grandSales) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-success-600 dark:text-success-500">{{ number_format($grandBaik) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-error-600 dark:text-error-500">{{ number_format($grandRusak) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-purple-600 dark:text-purple-400">{{ number_format($grandSisaSales) }}</td>
-                        <td class="px-5 py-3 text-center text-sm text-success-600 dark:text-success-500">{{ number_format($grandTotal) }}</td>
-                    </tr>
-                </tfoot>
-
-                @endif
 
             </table>
         </div>
