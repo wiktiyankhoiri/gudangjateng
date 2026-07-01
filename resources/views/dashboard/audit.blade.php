@@ -13,17 +13,17 @@
             <div class="flex items-stretch gap-3">
                 <div class="flex-1 text-center min-w-0">
                     <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Stok Baik</span>
-                    <h4 class="mt-2 text-title-sm font-bold text-success-600 dark:text-success-500 whitespace-nowrap">{{ number_format($totalStokBaik) }}</h4>
+                    <h4 class="mt-2 text-base font-bold text-success-600 dark:text-success-500 whitespace-nowrap">{{ shortNumber($totalStokBaik) }}</h4>
                 </div>
                 <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
                 <div class="flex-1 text-center min-w-0">
                     <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Stok Rusak</span>
-                    <h4 class="mt-2 text-title-sm font-bold text-error-600 dark:text-error-500 whitespace-nowrap">{{ number_format($totalStokRusak) }}</h4>
+                    <h4 class="mt-2 text-base font-bold text-error-600 dark:text-error-500 whitespace-nowrap">{{ shortNumber($totalStokRusak) }}</h4>
                 </div>
                 <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
                 <div class="flex-1 text-center min-w-0">
                     <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Stok Sales</span>
-                    <h4 class="mt-2 text-title-sm font-bold text-purple-600 dark:text-purple-400 whitespace-nowrap">{{ number_format($totalStokSales) }}</h4>
+                    <h4 class="mt-2 text-base font-bold text-purple-600 dark:text-purple-400 whitespace-nowrap">{{ shortNumber($totalStokSales) }}</h4>
                 </div>
             </div>
         </div>
@@ -37,8 +37,8 @@
         </div>
         <div class="mt-5 flex items-end justify-between">
             <div>
-                <span class="text-sm text-gray-500 dark:text-gray-400">Barang Masuk</span>
-                <h4 class="mt-2 text-title-sm font-bold text-success-600 dark:text-success-500">{{ number_format($totalBarangMasuk) }}</h4>
+                <span class="text-lg text-gray-500 dark:text-gray-400">Barang Masuk</span>
+                                        <h4 class="mt-2 text-base font-bold text-success-600 dark:text-success-500">{{ number_format($totalBarangMasuk) }}</h4>
             </div>
             <span class="flex items-center gap-1 rounded-full bg-success-50 py-0.5 pl-2 pr-2.5 text-sm font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">
                 <svg class="fill-current" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -57,8 +57,8 @@
         </div>
         <div class="mt-5 flex items-end justify-between">
             <div>
-                <span class="text-sm text-gray-500 dark:text-gray-400">Barang Keluar</span>
-                <h4 class="mt-2 text-title-sm font-bold text-error-600 dark:text-error-500">{{ number_format($totalBarangKeluar) }}</h4>
+                <span class="text-lg text-gray-500 dark:text-gray-400">Barang Keluar</span>
+                                        <h4 class="mt-2 text-base font-bold text-error-600 dark:text-error-500">{{ number_format($totalBarangKeluar) }}</h4>
             </div>
             <span class="flex items-center gap-1 rounded-full bg-error-50 py-0.5 pl-2 pr-2.5 text-sm font-medium text-error-600 dark:bg-error-500/15 dark:text-error-500">
                 <svg class="fill-current" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -71,15 +71,15 @@
 
 </div>
 
-<!-- ====== ROW 2: Barang Masuk Terbaru | Barang Keluar Terbaru ====== -->
+<!-- ====== ROW 2: Barang Keluar Terbaru | Barang Masuk Terbaru ====== -->
 <div class="mt-6 grid grid-cols-12 gap-4 md:gap-6 md:mt-8">
 
     <div class="col-span-12 lg:col-span-6">
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="px-5 py-4 sm:px-6">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Barang Masuk Terbaru</h3>
-                    <a href="{{ route('laporan.barangmasuk.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">Lihat Semua</a>
+                    <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Barang Keluar Terbaru</h3>
+                    <a href="{{ route('laporan.barangkeluar.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">Lihat Semua</a>
                 </div>
             </div>
             <div class="w-full overflow-x-auto">
@@ -87,23 +87,25 @@
                     <thead>
                         <tr class="border-y border-gray-100 dark:border-gray-800">
                             <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">No. Surat</p></th>
-                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Pabrik/Toko</p></th>
-                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Tipe</p></th>
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Tanggal</p></th>
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Toko</p></th>
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Sales</p></th>
                             <th class="py-3 px-5 text-right"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Item</p></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @if(!empty($adminBarangMasukTerbaru))
-                            @foreach(array_slice($adminBarangMasukTerbaru, 0, 5) as $bm)
+                        @if(!empty($barangKeluarTerbaru))
+                            @foreach(array_slice($barangKeluarTerbaru, 0, 5) as $bk)
                                 <tr>
-                                    <td class="py-3 px-5"><a href="{{ route('transaksi.barangmasuk.detail', $bm['id']) }}" class="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium text-theme-sm">{{ esc($bm['no_surat']) }}</a></td>
-                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ $bm['tipe'] === 'pabrik' ? esc($bm['nama_pabrik'] ?? '-') : esc($bm['nama_toko'] ?? '-') }}</p></td>
-                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ esc(ucfirst($bm['tipe'] ?? 'Transaksi')) }}</p></td>
-                                    <td class="py-3 px-5 text-right"><span class="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-theme-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">{{ number_format($bm['total_item']) }}</span></td>
+                                    <td class="py-3 px-5"><a href="{{ route('transaksi.barangkeluar.detail', $bk['id']) }}" class="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium text-theme-sm">{{ esc($bk['no_surat']) }}</a></td>
+                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ $bk['tanggal_formatted'] }}</p></td>
+                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ esc($bk['nama_toko']) }}</p></td>
+                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ esc($bk['nama_sales'] ?? '-') }}</p></td>
+                                    <td class="py-3 px-5 text-right"><span class="inline-flex items-center rounded-full bg-error-50 px-2 py-0.5 text-theme-xs font-medium text-error-600 dark:bg-error-500/15 dark:text-error-500">{{ number_format($bk['total_item']) }}</span></td>
                                 </tr>
                             @endforeach
                         @else
-                            <tr><td colspan="4" class="py-8 text-center text-gray-500 dark:text-gray-400">Belum ada barang masuk</td></tr>
+                            <tr><td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">Belum ada barang keluar</td></tr>
                         @endif
                     </tbody>
                 </table>
@@ -115,8 +117,8 @@
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="px-5 py-4 sm:px-6">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Barang Keluar Terbaru</h3>
-                    <a href="{{ route('laporan.barangkeluar.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">Lihat Semua</a>
+                    <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Barang Masuk Terbaru</h3>
+                    <a href="{{ route('laporan.barangmasuk.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200">Lihat Semua</a>
                 </div>
             </div>
             <div class="w-full overflow-x-auto">
@@ -124,23 +126,25 @@
                     <thead>
                         <tr class="border-y border-gray-100 dark:border-gray-800">
                             <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">No. Surat</p></th>
-                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Toko</p></th>
-                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Sales</p></th>
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Tanggal</p></th>
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Pabrik/Toko</p></th>
+                            <th class="py-3 px-5 text-left"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Tipe</p></th>
                             <th class="py-3 px-5 text-right"><p class="font-medium text-gray-500 text-theme-xs dark:text-gray-400">Item</p></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @if(!empty($barangKeluarTerbaru))
-                            @foreach(array_slice($barangKeluarTerbaru, 0, 5) as $bk)
+                        @if(!empty($adminBarangMasukTerbaru))
+                            @foreach(array_slice($adminBarangMasukTerbaru, 0, 5) as $bm)
                                 <tr>
-                                    <td class="py-3 px-5"><a href="{{ route('transaksi.barangkeluar.detail', $bk['id']) }}" class="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium text-theme-sm">{{ esc($bk['no_surat']) }}</a></td>
-                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ esc($bk['nama_toko']) }}</p></td>
-                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ esc($bk['nama_sales'] ?? '-') }}</p></td>
-                                    <td class="py-3 px-5 text-right"><span class="inline-flex items-center rounded-full bg-error-50 px-2 py-0.5 text-theme-xs font-medium text-error-600 dark:bg-error-500/15 dark:text-error-500">{{ number_format($bk['total_item']) }}</span></td>
+                                    <td class="py-3 px-5"><a href="{{ route('transaksi.barangmasuk.detail', $bm['id']) }}" class="text-brand-500 hover:text-brand-600 dark:text-brand-400 font-medium text-theme-sm">{{ esc($bm['no_surat']) }}</a></td>
+                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ $bm['tanggal_formatted'] }}</p></td>
+                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ $bm['tipe'] === 'pabrik' ? esc($bm['nama_pabrik'] ?? '-') : esc($bm['nama_toko'] ?? '-') }}</p></td>
+                                    <td class="py-3 px-5"><p class="text-gray-500 text-theme-sm dark:text-gray-400">{{ esc(ucfirst($bm['tipe'] ?? 'Transaksi')) }}</p></td>
+                                    <td class="py-3 px-5 text-right"><span class="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-theme-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">{{ number_format($bm['total_item']) }}</span></td>
                                 </tr>
                             @endforeach
                         @else
-                            <tr><td colspan="4" class="py-8 text-center text-gray-500 dark:text-gray-400">Belum ada barang keluar</td></tr>
+                            <tr><td colspan="5" class="py-8 text-center text-gray-500 dark:text-gray-400">Belum ada barang masuk</td></tr>
                         @endif
                     </tbody>
                 </table>
@@ -156,7 +160,7 @@
     <div class="col-span-12 lg:col-span-6">
         <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Mutasi Terbaru</h3>
+                <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Mutasi Terbaru</h3>
                 <a href="{{ route('laporan.mutasi.index') }}" class="text-theme-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400">Lihat Semua</a>
             </div>
             <div class="w-full overflow-x-auto">
@@ -189,7 +193,7 @@
     <div class="col-span-12 lg:col-span-6">
         <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Retur Terbaru</h3>
+                <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Retur Terbaru</h3>
                 <a href="{{ route('laporan.barangmasuk.index', ['tipe' => 'retur']) }}" class="text-theme-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400">Lihat Semua</a>
             </div>
             <div class="p-5">
@@ -226,7 +230,7 @@
     <div class="col-span-12 lg:col-span-6">
         <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">Stok Opname ({{ \Carbon\Carbon::now()->translatedFormat('F Y') }})</h3>
+                <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Stok Opname ({{ \Carbon\Carbon::now()->translatedFormat('F Y') }})</h3>
                 <a href="{{ route('transaksi.stokopname.index') }}" class="text-theme-xs font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400">Lihat Semua</a>
             </div>
             <div class="mt-3 flex">
@@ -248,13 +252,13 @@
     <div class="col-span-12 lg:col-span-6">
         <div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold text-gray-800 dark:text-white/90">Penyesuaian Stok</h3>
+                <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Penyesuaian Stok</h3>
                 <a href="{{ route('transaksi.penyesuaianstok.index') }}" class="text-theme-xs font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400">Lihat Semua</a>
             </div>
             <div class="mt-3 flex">
                 <div class="flex-1 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                     <p class="text-xs text-gray-500 dark:text-gray-400">Total</p>
-                    <p class="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">{{ number_format($totalMutasi) }}</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-500 dark:text-gray-400">{{ number_format($totalMutasi) }}</p>
                 </div>
                 <div class="flex-1 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                     <p class="text-xs text-gray-500 dark:text-gray-400">Hari Ini</p>

@@ -4,7 +4,7 @@
     <div class="col-span-12 lg:col-span-6">
         <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Aksi Cepat</h3>
+                <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Aksi Cepat</h3>
                 <a href="{{ route('pengaturan.tentangsistem.index') }}" class="text-theme-sm font-medium text-brand-500 hover:text-brand-600">Tentang Sistem</a>
             </div>
             <div class="p-5">
@@ -41,7 +41,7 @@
     <div class="col-span-12 lg:col-span-6">
         <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
             <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Audit Log Terbaru</h3>
+                <h3 class="text-lg font-semibold text-gray-500 dark:text-gray-400">Audit Log Terbaru</h3>
                 <a href="{{ route('pengaturan.auditlog.index') }}" class="text-theme-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400">Lihat Semua</a>
             </div>
             <div class="p-5">
@@ -52,7 +52,7 @@
                             {{ ucfirst($log->action) }}
                         </span>
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm text-gray-800 dark:text-white/90 truncate">{{ esc($log->description) }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ esc($log->description) }}</p>
                             <p class="text-xs text-gray-400 dark:text-gray-500">{{ esc($log->user_nama ?? 'System') }} &middot; {{ $log->created_at?->diffForHumans() }}</p>
                         </div>
                     </div>

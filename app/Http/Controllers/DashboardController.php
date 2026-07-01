@@ -80,6 +80,7 @@ class DashboardController extends Controller
             ->map(function ($item) {
                 $arr = $item->toArray();
                 $arr['total_item'] = $arr['details_count'] ?? 0;
+                $arr['tanggal_formatted'] = $item->tanggal ? $item->tanggal->format('d/m/Y') : '-';
                 return $arr;
             })
             ->toArray();
@@ -96,6 +97,7 @@ class DashboardController extends Controller
             ->map(function ($item) {
                 $arr = $item->toArray();
                 $arr['total_item'] = $arr['details_count'] ?? 0;
+                $arr['tanggal_formatted'] = $item->tanggal ? $item->tanggal->format('d/m/Y') : '-';
                 return $arr;
             })
             ->toArray();

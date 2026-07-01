@@ -34,6 +34,19 @@ if (!function_exists('field_error_class')) {
     }
 }
 
+if (!function_exists('shortNumber')) {
+    function shortNumber($num): string
+    {
+        if ($num < 1000) {
+            return number_format($num);
+        }
+        if ($num < 1000000) {
+            return number_format($num / 1000, ($num < 10000 ? 1 : 0)) . 'rb';
+        }
+        return number_format($num / 1000000, ($num < 10000000 ? 1 : 0)) . 'jt';
+    }
+}
+
 if (!function_exists('field_error_msg')) {
     function field_error_msg(string $field): string
     {
