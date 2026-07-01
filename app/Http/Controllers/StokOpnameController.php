@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessException;
 use App\Models\Barang;
+use App\Models\PenyesuaianStok;
 use App\Models\Stok;
 use App\Models\StokOpname;
 use App\Models\StokOpnameDetail;
 use App\Services\StokService;
-use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class StokOpnameController extends Controller
 {
@@ -99,7 +100,7 @@ class StokOpnameController extends Controller
                 ->exists();
 
             if ($sudahAda) {
-                throw new \App\Exceptions\BusinessException(
+                throw new BusinessException(
                     "Stok opname untuk bulan {$bulanOpname}/{$tahunOpname} sudah ada"
                 );
             }
@@ -110,7 +111,7 @@ class StokOpnameController extends Controller
                 ->first();
 
             $urutan = $lastOpname ? ((int) substr($lastOpname->no_opname, -3)) + 1 : 1;
-            $noOpname = 'SO-' . now()->format('Ymd') . '-' . str_pad($urutan, 3, '0', STR_PAD_LEFT);
+            $noOpname = 'SO-'.now()->format('Ymd').'-'.str_pad($urutan, 3, '0', STR_PAD_LEFT);
 
             $stokOpname = StokOpname::create([
                 'no_opname' => $noOpname,
@@ -124,7 +125,9 @@ class StokOpnameController extends Controller
 
             foreach ($barangIds as $i => $barangId) {
                 $barangId = (int) $barangId;
-                if ($barangId <= 0) continue;
+                if ($barangId <= 0) {
+                    continue;
+                }
 
                 $stokSistem = DB::table('stok')->where('barang_id', $barangId)->first();
                 $stokSistemBaik = $stokSistem ? (int) $stokSistem->stok_baik : 0;
@@ -136,7 +139,7 @@ class StokOpnameController extends Controller
                 $fisikSalesVal = (int) ($fisikSales[$i] ?? 0);
 
                 if ($fisikBaikVal < 0 || $fisikRusakVal < 0 || $fisikSalesVal < 0) {
-                    throw new \App\Exceptions\BusinessException('Jumlah tidak boleh negatif');
+                    throw new BusinessException('Jumlah tidak boleh negatif');
                 }
 
                 if ($fisikBaikVal === 0 && $fisikRusakVal === 0 && $fisikSalesVal === 0) {
@@ -164,7 +167,7 @@ class StokOpnameController extends Controller
             if ($totalBarang === 0) {
                 // Hapus header jika tidak ada detail
                 $stokOpname->delete();
-                throw new \App\Exceptions\BusinessException('Setidaknya satu barang harus diisi');
+                throw new BusinessException('Setidaknya satu barang harus diisi');
             }
 
             DB::commit();
@@ -179,6 +182,7 @@ class StokOpnameController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()
                 ->back()
                 ->withInput()
@@ -194,7 +198,7 @@ class StokOpnameController extends Controller
             ->where('stok_opname.id', $id)
             ->first();
 
-        if (!$opname) {
+        if (! $opname) {
             return redirect()->route('transaksi.stokopname.index')
                 ->with('error', 'Data stok opname tidak ditemukan');
         }
@@ -256,7 +260,34 @@ class StokOpnameController extends Controller
                 $stokRusakBaru = (int) $d->stok_fisik_rusak;
                 $stokSalesBaru = (int) ($d->stok_fisik_sales ?? -1);
 
+                $stokSblm = Stok::where('barang_id', $d->barang_id)->first();
+                $stokBaikSblm = $stokSblm?->stok_baik ?? 0;
+                $stokRusakSblm = $stokSblm?->stok_rusak ?? 0;
+                $stokSalesSblm = $stokSblm?->stok_sales ?? 0;
+
                 $this->stokService->adjustStok($d->barang_id, $stokSistemBaru, $stokRusakBaru, $stokSalesBaru);
+
+                $selisihBaik = (int) $d->stok_fisik_baik - $stokBaikSblm;
+                $selisihRusak = (int) $d->stok_fisik_rusak - $stokRusakSblm;
+                $selisihSales = (int) ($d->stok_fisik_sales ?? 0) - $stokSalesSblm;
+
+                if ($selisihBaik != 0 || $selisihRusak != 0 || $selisihSales != 0) {
+                    PenyesuaianStok::create([
+                        'tanggal' => now(),
+                        'barang_id' => $d->barang_id,
+                        'stok_baik_sebelum' => $stokBaikSblm,
+                        'stok_baik_sesudah' => (int) $d->stok_fisik_baik,
+                        'stok_rusak_sebelum' => $stokRusakSblm,
+                        'stok_rusak_sesudah' => (int) $d->stok_fisik_rusak,
+                        'stok_sales_sebelum' => $stokSalesSblm,
+                        'stok_sales_sesudah' => (int) ($d->stok_fisik_sales ?? 0),
+                        'selisih_baik' => $selisihBaik,
+                        'selisih_rusak' => $selisihRusak,
+                        'selisih_sales' => $selisihSales,
+                        'alasan' => 'Stok Opname: '.$opname->no_opname,
+                        'user_id' => auth()->id(),
+                    ]);
+                }
             }
 
             $opname->update(['status' => 'diterapkan']);
@@ -273,6 +304,7 @@ class StokOpnameController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()
                 ->route('transaksi.stokopname.detail', $id)
                 ->with('error', $this->getSafeErrorMessage($e));
@@ -283,7 +315,7 @@ class StokOpnameController extends Controller
     {
         $opname = StokOpname::findOrFail($id);
 
-        if (!in_array($opname->status, ['draft', 'selesai'])) {
+        if (! in_array($opname->status, ['draft', 'selesai'])) {
             return redirect()->route('transaksi.stokopname.detail', $id)
                 ->with('error', 'Opname tidak bisa dibatalkan');
         }
@@ -302,7 +334,7 @@ class StokOpnameController extends Controller
     public function template()
     {
         try {
-            $spreadsheet = new Spreadsheet();
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             $sheet->setCellValue('A1', 'kode_barang');
@@ -318,13 +350,13 @@ class StokOpnameController extends Controller
             $baris = 2;
             foreach ($barang as $b) {
                 $stok = Stok::where('barang_id', $b->id)->first();
-                $sheet->setCellValue('A' . $baris, $b->kode_barang);
-                $sheet->setCellValue('B' . $baris, $b->nama_barang);
-                $sheet->setCellValue('C' . $baris, $stok ? (int) $stok->stok_baik : 0);
-                $sheet->setCellValue('D' . $baris, $stok ? (int) $stok->stok_rusak : 0);
-                $sheet->setCellValue('E' . $baris, '');
-                $sheet->setCellValue('F' . $baris, '');
-                $sheet->setCellValue('G' . $baris, '');
+                $sheet->setCellValue('A'.$baris, $b->kode_barang);
+                $sheet->setCellValue('B'.$baris, $b->nama_barang);
+                $sheet->setCellValue('C'.$baris, $stok ? (int) $stok->stok_baik : 0);
+                $sheet->setCellValue('D'.$baris, $stok ? (int) $stok->stok_rusak : 0);
+                $sheet->setCellValue('E'.$baris, '');
+                $sheet->setCellValue('F'.$baris, '');
+                $sheet->setCellValue('G'.$baris, '');
                 $baris++;
             }
 
@@ -336,7 +368,7 @@ class StokOpnameController extends Controller
             $filename = 'template_stok_opname.xlsx';
 
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Content-Disposition: attachment;filename="'.$filename.'"');
             header('Cache-Control: max-age=0');
 
             $writer->save('php://output');
@@ -350,7 +382,7 @@ class StokOpnameController extends Controller
     {
         $file = $request->file('file_excel');
 
-        if (!$file->isValid()) {
+        if (! $file->isValid()) {
             return redirect()->back()->with('error', 'File tidak valid');
         }
 
@@ -364,12 +396,12 @@ class StokOpnameController extends Controller
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'application/vnd.ms-excel',
         ];
-        if (!in_array($file->getMimeType(), $allowedMimes)) {
+        if (! in_array($file->getMimeType(), $allowedMimes)) {
             return redirect()->back()->with('error', 'Format file harus Excel (.xls/.xlsx)');
         }
 
         $extension = strtolower($file->extension());
-        if (!in_array($extension, ['xls', 'xlsx'])) {
+        if (! in_array($extension, ['xls', 'xlsx'])) {
             return redirect()->back()->with('error', 'Format file harus xls atau xlsx');
         }
 
@@ -393,7 +425,7 @@ class StokOpnameController extends Controller
                 ->first();
 
             $urutan = $lastOpname ? ((int) substr($lastOpname->no_opname, -3)) + 1 : 1;
-            $noOpname = 'SO-' . now()->format('Ymd') . '-' . str_pad($urutan, 3, '0', STR_PAD_LEFT);
+            $noOpname = 'SO-'.now()->format('Ymd').'-'.str_pad($urutan, 3, '0', STR_PAD_LEFT);
 
             $stokOpname = StokOpname::create([
                 'no_opname' => $noOpname,
@@ -410,12 +442,14 @@ class StokOpnameController extends Controller
                 $kodeBarang = strtoupper(trim($row[0] ?? ''));
                 if (empty($kodeBarang)) {
                     $rowNumber++;
+
                     continue;
                 }
 
                 $barang = Barang::where('kode_barang', $kodeBarang)->first();
-                if (!$barang) {
+                if (! $barang) {
                     $rowNumber++;
+
                     continue;
                 }
 
@@ -425,11 +459,13 @@ class StokOpnameController extends Controller
 
                 if ($fisikBaik < 0 || $fisikRusak < 0) {
                     $rowNumber++;
+
                     continue;
                 }
 
                 if ($fisikBaik === 0 && $fisikRusak === 0) {
                     $rowNumber++;
+
                     continue;
                 }
 
@@ -455,7 +491,7 @@ class StokOpnameController extends Controller
 
             if ($totalImpor === 0) {
                 $stokOpname->delete();
-                throw new \App\Exceptions\BusinessException('Tidak ada data valid yang diimpor');
+                throw new BusinessException('Tidak ada data valid yang diimpor');
             }
 
             DB::commit();
@@ -466,10 +502,11 @@ class StokOpnameController extends Controller
             ]);
 
             return redirect()->route('transaksi.stokopname.detail', $stokOpname->id)
-                ->with('success', $totalImpor . ' barang berhasil diimpor');
+                ->with('success', $totalImpor.' barang berhasil diimpor');
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()
                 ->back()
                 ->withInput()
@@ -479,7 +516,7 @@ class StokOpnameController extends Controller
 
     private function normalizeDate(?string $value): ?string
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 

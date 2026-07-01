@@ -33,7 +33,7 @@ class KartuStokController extends Controller
             }
 
             // Use +1 day for exclusive end date
-            $tglAkhir = date('Y-m-d', strtotime($tanggalAkhir . ' +1 day'));
+            $tglAkhir = date('Y-m-d', strtotime($tanggalAkhir.' +1 day'));
 
             // MySQL-compatible SQL with manual pagination
             $sql = "
@@ -205,7 +205,7 @@ class KartuStokController extends Controller
                         SELECT
                             ps.tanggal,
                             CONCAT('PS-', ps.id) as surat_jalan,
-                            'Penyesuaian Stok' as transaksi,
+                            CASE WHEN ps.alasan LIKE 'Stok Opname:%' THEN 'Stok Opname' ELSE 'Penyesuaian Stok' END as transaksi,
                             'Semua' as sumber_stok,
                             COALESCE(ps.alasan, '-') as keterangan,
                             CASE
@@ -245,17 +245,17 @@ class KartuStokController extends Controller
 
             $params = array_merge($initParams, $masukParams, $keluarParams, $mutasiParams, $penyesuaianParams);
 
-            $page = (int)($request->get('page') ?? 1);
+            $page = (int) ($request->get('page') ?? 1);
             $perPage = 50;
             $offset = ($page - 1) * $perPage;
 
             // First, get total count
             $countSql = "SELECT COUNT(*) as total FROM ({$sql}) as count_table";
             $countResult = DB::selectOne($countSql, $params);
-            $totalCount = (int)($countResult->total ?? 0);
+            $totalCount = (int) ($countResult->total ?? 0);
 
             // Now paginate
-            $sql .= " LIMIT " . (int)$perPage . " OFFSET " . (int)$offset;
+            $sql .= ' LIMIT '.(int) $perPage.' OFFSET '.(int) $offset;
 
             $result = DB::select($sql, $params);
 
@@ -263,9 +263,11 @@ class KartuStokController extends Controller
                 return (array) $row;
             }, $result);
 
-            $totalPages = max(1, (int)ceil($totalCount / $perPage));
+            $totalPages = max(1, (int) ceil($totalCount / $perPage));
 
-            if ($page > $totalPages) $page = $totalPages;
+            if ($page > $totalPages) {
+                $page = $totalPages;
+            }
 
             $pagination = [
                 'page' => $page,
@@ -275,7 +277,7 @@ class KartuStokController extends Controller
             ];
 
             // Sum SQL
-            $sumSql = "
+            $sumSql = '
                 SELECT
                     COALESCE(SUM(masuk), 0) as total_masuk,
                     COALESCE(SUM(keluar), 0) as total_keluar
@@ -335,20 +337,20 @@ class KartuStokController extends Controller
                         WHERE ps.barang_id = ? AND ps.tanggal >= ? AND ps.tanggal < ?
                     )
                 ) sub
-            ";
+            ';
 
             $totals = DB::selectOne($sumSql, $params);
 
-            $totalMasuk = (int)($totals->total_masuk ?? 0);
-            $totalKeluar = (int)($totals->total_keluar ?? 0);
+            $totalMasuk = (int) ($totals->total_masuk ?? 0);
+            $totalKeluar = (int) ($totals->total_keluar ?? 0);
 
             $stok = Stok::where('barang_id', $barangId)->first();
 
             if ($stok) {
-                $saldoAkhir = (int)$stok->stok_baik + (int)$stok->stok_rusak + (int)$stok->stok_sales;
-                $stokBaik = (int)$stok->stok_baik;
-                $stokRusak = (int)$stok->stok_rusak;
-                $stokSales = (int)$stok->stok_sales;
+                $saldoAkhir = (int) $stok->stok_baik + (int) $stok->stok_rusak + (int) $stok->stok_sales;
+                $stokBaik = (int) $stok->stok_baik;
+                $stokRusak = (int) $stok->stok_rusak;
+                $stokSales = (int) $stok->stok_sales;
             } else {
                 $stokBaik = 0;
                 $stokRusak = 0;
@@ -379,7 +381,7 @@ class KartuStokController extends Controller
 
     private function normalizeDate(?string $value): ?string
     {
-        if (!$value) {
+        if (! $value) {
             return null;
         }
 
