@@ -129,7 +129,7 @@ class RestoreController extends Controller
             if ($file === '.' || $file === '..') continue;
             $filepath = $this->backupPath . '/' . $file;
             if (is_file($filepath) && preg_match('/\.sql$/', $file)) {
-                $backups[] = ['filename' => $file, 'size' => filesize($filepath), 'created' => filectime($filepath), 'path' => $filepath];
+                $backups[] = ['filename' => $file, 'size' => filesize($filepath), 'created' => $this->getBackupTimestamp($file, $filepath), 'path' => $filepath];
             }
         }
 
@@ -152,5 +152,18 @@ class RestoreController extends Controller
         } catch (\Throwable $e) {
             \Log::error('Failed to log restore: ' . $e->getMessage());
         }
+    }
+
+    private function getBackupTimestamp(string $filename, string $filepath): int
+    {
+        if (preg_match('/^(?:gudangjateng-)?(?:safety-)?backup-(\d{4}-\d{2}-\d{2})-(\d{6})\.sql$/', $filename, $matches)) {
+            $timestamp = strtotime($matches[1] . ' ' . substr($matches[2], 0, 2) . ':' . substr($matches[2], 2, 2) . ':' . substr($matches[2], 4, 2));
+
+            if ($timestamp !== false) {
+                return $timestamp;
+            }
+        }
+
+        return filemtime($filepath);
     }
 }

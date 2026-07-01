@@ -65,7 +65,7 @@ class BackupController extends Controller
         $this->requireAdminOrAudit();
 
         try {
-            $filename = 'backup-' . date('Y-m-d-His') . '.sql';
+            $filename = 'gudangjateng-backup-' . date('Y-m-d-His') . '.sql';
             $filepath = $this->backupPath . '/' . $filename;
 
             $sql = app(DatabaseBackupService::class)->generateDump();
@@ -160,7 +160,7 @@ class BackupController extends Controller
                 $backups[] = [
                     'filename' => $file,
                     'size' => filesize($filepath),
-                    'created' => filectime($filepath),
+                    'created' => $this->getBackupTimestamp($file, $filepath),
                     'path' => $filepath,
                 ];
             }
@@ -192,5 +192,18 @@ class BackupController extends Controller
         } catch (\Throwable $e) {
             \Log::error('Failed to log backup: ' . $e->getMessage());
         }
+    }
+
+    private function getBackupTimestamp(string $filename, string $filepath): int
+    {
+        if (preg_match('/^(?:gudangjateng-)?(?:safety-)?backup-(\d{4}-\d{2}-\d{2})-(\d{6})\.sql$/', $filename, $matches)) {
+            $timestamp = strtotime($matches[1] . ' ' . substr($matches[2], 0, 2) . ':' . substr($matches[2], 2, 2) . ':' . substr($matches[2], 4, 2));
+
+            if ($timestamp !== false) {
+                return $timestamp;
+            }
+        }
+
+        return filemtime($filepath);
     }
 }
