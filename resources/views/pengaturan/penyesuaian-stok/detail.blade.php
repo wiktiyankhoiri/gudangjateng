@@ -18,15 +18,15 @@
         <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
                 <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Tanggal</p>
-                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $data->tanggal ? $data->tanggal->format('d-m-Y') : '-' }}</p>
+                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $detail->tanggal ? $detail->tanggal->format('d-m-Y') : '-' }}</p>
             </div>
             <div>
                 <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">User</p>
-                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $data->nama_user ?? '-' }}</p>
+                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $detail->nama_user ?? '-' }}</p>
             </div>
             <div>
                 <p class="mb-1 text-xs font-medium text-gray-500 uppercase dark:text-gray-400">Barang</p>
-                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $data->kode_barang ?? '-' }} - {{ $data->nama_barang ?? '-' }}</p>
+                <p class="text-sm font-medium text-gray-800 dark:text-white/90">{{ $detail->kode_barang ?? '-' }} - {{ $detail->nama_barang ?? '-' }}</p>
             </div>
         </div>
 
@@ -42,19 +42,19 @@
                     <table class="min-w-full">
                         <tr>
                             <th width="40%" class="pb-3 pr-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Sebelum</th>
-                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($data->stok_baik_sebelum ?? 0) }}</td>
+                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($detail->stok_baik_sebelum ?? 0) }}</td>
                         </tr>
                         <tr>
                             <th width="40%" class="pb-3 pr-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Sesudah</th>
-                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($data->stok_baik_sesudah ?? 0) }}</td>
+                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($detail->stok_baik_sesudah ?? 0) }}</td>
                         </tr>
                         <tr>
                             <th width="40%" class="pr-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Selisih</th>
                             <td class="text-sm">
-                                @if($data->selisih_baik >= 0)
-                                    <span class="font-semibold text-success-600 dark:text-success-400">+{{ number_format($data->selisih_baik ?? 0) }}</span>
+                                @if($detail->selisih_baik >= 0)
+                                    <span class="font-semibold text-success-600 dark:text-success-400">+{{ number_format($detail->selisih_baik ?? 0) }}</span>
                                 @else
-                                    <span class="font-semibold text-error-600 dark:text-error-400">{{ number_format($data->selisih_baik ?? 0) }}</span>
+                                    <span class="font-semibold text-error-600 dark:text-error-400">{{ number_format($detail->selisih_baik ?? 0) }}</span>
                                 @endif
                             </td>
                         </tr>
@@ -70,19 +70,19 @@
                     <table class="min-w-full">
                         <tr>
                             <th width="40%" class="pb-3 pr-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Sebelum</th>
-                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($data->stok_rusak_sebelum ?? 0) }}</td>
+                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($detail->stok_rusak_sebelum ?? 0) }}</td>
                         </tr>
                         <tr>
                             <th width="40%" class="pb-3 pr-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Sesudah</th>
-                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($data->stok_rusak_sesudah ?? 0) }}</td>
+                            <td class="pb-3 text-sm text-gray-800 dark:text-white/90">{{ number_format($detail->stok_rusak_sesudah ?? 0) }}</td>
                         </tr>
                         <tr>
                             <th width="40%" class="pr-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Selisih</th>
                             <td class="text-sm">
-                                @if($data->selisih_rusak >= 0)
-                                    <span class="font-semibold text-success-600 dark:text-success-400">+{{ number_format($data->selisih_rusak ?? 0) }}</span>
+                                @if($detail->selisih_rusak >= 0)
+                                    <span class="font-semibold text-success-600 dark:text-success-400">+{{ number_format($detail->selisih_rusak ?? 0) }}</span>
                                 @else
-                                    <span class="font-semibold text-error-600 dark:text-error-400">{{ number_format($data->selisih_rusak ?? 0) }}</span>
+                                    <span class="font-semibold text-error-600 dark:text-error-400">{{ number_format($detail->selisih_rusak ?? 0) }}</span>
                                 @endif
                             </td>
                         </tr>
@@ -95,7 +95,7 @@
         <div class="mt-6">
             <label class="text-sm font-medium text-gray-800 dark:text-white/90">Alasan Penyesuaian</label>
             <div class="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-300">
-                {!! nl2br(e($data->alasan ?? '-')) !!}
+                {!! nl2br(e($detail->alasan ?? '-')) !!}
             </div>
         </div>
 
