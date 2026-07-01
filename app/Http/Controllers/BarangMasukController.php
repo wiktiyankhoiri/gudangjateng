@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessException;
+use App\Models\Barang;
 use App\Models\BarangMasuk;
 use App\Models\BarangMasukDetail;
-use App\Models\Barang;
+use App\Models\Notification;
 use App\Models\Pabrik;
 use App\Models\Toko;
 use App\Services\StokService;
-use App\Models\Notification;
-use App\Exceptions\BusinessException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,15 +19,39 @@ class BarangMasukController extends Controller
         protected StokService $stokService
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $this->requireAdmin();
 
-        $data = BarangMasuk::orderBy('id', 'DESC')->paginate(50);
+        $q = $request->get('q');
+
+        $query = BarangMasuk::query()
+            ->select('barang_masuk.*')
+            ->selectRaw('COALESCE(pabrik.nama_pabrik, toko.nama_toko, \'-\') as sumber')
+            ->selectSub(function ($q) {
+                $q->from('barang_masuk_detail')
+                    ->whereColumn('barang_masuk_id', 'barang_masuk.id')
+                    ->selectRaw('COUNT(*)');
+            }, 'total_item')
+            ->leftJoin('pabrik', 'pabrik.id', '=', 'barang_masuk.pabrik_id')
+            ->leftJoin('toko', 'toko.id', '=', 'barang_masuk.toko_id');
+
+        if ($q) {
+            $query->where(function ($w) use ($q) {
+                $w->where('barang_masuk.no_surat', 'ILIKE', "%{$q}%")
+                    ->orWhere('barang_masuk.keterangan', 'ILIKE', "%{$q}%")
+                    ->orWhere('barang_masuk.tipe', 'ILIKE', "%{$q}%")
+                    ->orWhere('pabrik.nama_pabrik', 'ILIKE', "%{$q}%")
+                    ->orWhere('toko.nama_toko', 'ILIKE', "%{$q}%");
+            });
+        }
+
+        $data = $query->orderBy('barang_masuk.id', 'DESC')->paginate(50);
 
         return view('transaksi.barang-masuk.index', [
             'title' => 'Barang Masuk',
             'data' => $data,
+            'q' => $q,
         ]);
     }
 
@@ -86,8 +110,8 @@ class BarangMasukController extends Controller
                 'no_surat' => $post['no_surat'],
                 'tanggal' => $post['tanggal'],
                 'tipe' => $post['tipe'],
-                'pabrik_id' => !empty($post['pabrik_id']) ? $post['pabrik_id'] : null,
-                'toko_id' => !empty($post['toko_id']) ? $post['toko_id'] : null,
+                'pabrik_id' => ! empty($post['pabrik_id']) ? $post['pabrik_id'] : null,
+                'toko_id' => ! empty($post['toko_id']) ? $post['toko_id'] : null,
                 'keterangan' => $post['keterangan'] ?? null,
             ]);
 
@@ -120,9 +144,9 @@ class BarangMasukController extends Controller
             foreach ($detailBarang as $barangId => $qty) {
                 $b = Barang::find($barangId);
                 $totalQty = $qty['qty_baik'] + $qty['qty_rusak'];
-                $barangNames[] = $totalQty . 'x ' . ($b ? $b->nama_barang : 'Barang');
+                $barangNames[] = $totalQty.'x '.($b ? $b->nama_barang : 'Barang');
             }
-            $message = $post['no_surat'] . ': ' . implode(', ', $barangNames);
+            $message = $post['no_surat'].': '.implode(', ', $barangNames);
 
             Notification::notify('Barang Masuk Baru', $message, 'barang_masuk', $id);
 
@@ -212,8 +236,8 @@ class BarangMasukController extends Controller
                 'no_surat' => $post['no_surat'],
                 'tanggal' => $post['tanggal'],
                 'tipe' => $post['tipe'],
-                'pabrik_id' => !empty($post['pabrik_id']) ? $post['pabrik_id'] : null,
-                'toko_id' => !empty($post['toko_id']) ? $post['toko_id'] : null,
+                'pabrik_id' => ! empty($post['pabrik_id']) ? $post['pabrik_id'] : null,
+                'toko_id' => ! empty($post['toko_id']) ? $post['toko_id'] : null,
                 'keterangan' => $post['keterangan'] ?? null,
             ]);
 
@@ -245,9 +269,9 @@ class BarangMasukController extends Controller
             foreach ($detailBarang as $barangId => $qty) {
                 $b = Barang::find($barangId);
                 $totalQty = $qty['qty_baik'] + $qty['qty_rusak'];
-                $barangNames[] = $totalQty . 'x ' . ($b ? $b->nama_barang : 'Barang');
+                $barangNames[] = $totalQty.'x '.($b ? $b->nama_barang : 'Barang');
             }
-            $message = $post['no_surat'] . ': ' . implode(', ', $barangNames);
+            $message = $post['no_surat'].': '.implode(', ', $barangNames);
 
             Notification::notify('Barang Masuk Diupdate', $message, 'barang_masuk', $barangMasuk->id);
 
@@ -264,7 +288,7 @@ class BarangMasukController extends Controller
                 $this->writeAuditLog(
                     'update_gagal',
                     $barangMasuk->id,
-                    'Gagal update barang masuk: ' . $this->getSafeErrorMessage($e),
+                    'Gagal update barang masuk: '.$this->getSafeErrorMessage($e),
                     [
                         'input' => $post,
                         'old_detail' => $failedDetail,
@@ -272,7 +296,7 @@ class BarangMasukController extends Controller
                     ]
                 );
             } catch (\Exception $auditErr) {
-                \Log::error('Gagal menulis audit log: ' . $auditErr->getMessage());
+                \Log::error('Gagal menulis audit log: '.$auditErr->getMessage());
             }
 
             return redirect()
@@ -344,6 +368,7 @@ class BarangMasukController extends Controller
                 $stokPerBarang[$d->barang_id] = $stok;
             }
         }
+
         return $stokPerBarang;
     }
 
@@ -352,7 +377,9 @@ class BarangMasukController extends Controller
         $detail = [];
         foreach ((array) ($post['barang_id'] ?? []) as $i => $barangId) {
             $barangId = (int) $barangId;
-            if ($barangId <= 0) continue;
+            if ($barangId <= 0) {
+                continue;
+            }
 
             $qtyBaik = (int) ($post['qty_baik'][$i] ?? 0);
             $qtyRusak = (int) ($post['qty_rusak'][$i] ?? 0);
@@ -377,8 +404,8 @@ class BarangMasukController extends Controller
 
         $validIds = Barang::select('id')->whereIn('id', array_keys($detail))->pluck('id')->toArray();
         foreach (array_keys($detail) as $bid) {
-            if (!in_array($bid, $validIds)) {
-                throw new BusinessException('Barang ID ' . $bid . ' tidak ditemukan');
+            if (! in_array($bid, $validIds)) {
+                throw new BusinessException('Barang ID '.$bid.' tidak ditemukan');
             }
         }
 

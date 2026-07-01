@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessException;
+use App\Models\Barang;
 use App\Models\BarangKeluar;
 use App\Models\BarangKeluarDetail;
-use App\Models\Barang;
+use App\Models\Notification;
 use App\Models\Toko;
 use App\Models\User;
 use App\Services\StokService;
-use App\Models\Notification;
-use App\Exceptions\BusinessException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,20 +19,38 @@ class BarangKeluarController extends Controller
         protected StokService $stokService
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $this->requireAdmin();
 
-        $data = BarangKeluar::query()
+        $q = $request->get('q');
+
+        $query = BarangKeluar::query()
             ->select('barang_keluar.*', 'toko.nama_toko', 'sales.nama as nama_sales')
+            ->selectRaw("CASE WHEN barang_keluar.sumber = 'sales' THEN 'Sales' ELSE 'Gudang' END as sumber")
+            ->selectSub(function ($q) {
+                $q->from('barang_keluar_detail')
+                    ->whereColumn('barang_keluar_id', 'barang_keluar.id')
+                    ->selectRaw('COUNT(*)');
+            }, 'total_item')
             ->leftJoin('toko', 'toko.id', '=', 'barang_keluar.toko_id')
-            ->leftJoin('users as sales', 'sales.id', '=', 'barang_keluar.sales_id')
-            ->orderBy('barang_keluar.id', 'DESC')
-            ->paginate(50);
+            ->leftJoin('users as sales', 'sales.id', '=', 'barang_keluar.sales_id');
+
+        if ($q) {
+            $query->where(function ($w) use ($q) {
+                $w->where('barang_keluar.no_surat', 'ILIKE', "%{$q}%")
+                    ->orWhere('barang_keluar.keterangan', 'ILIKE', "%{$q}%")
+                    ->orWhere('toko.nama_toko', 'ILIKE', "%{$q}%")
+                    ->orWhere('sales.nama', 'ILIKE', "%{$q}%");
+            });
+        }
+
+        $data = $query->orderBy('barang_keluar.id', 'DESC')->paginate(50);
 
         return view('transaksi.barang-keluar.index', [
             'title' => 'Barang Keluar',
             'data' => $data,
+            'q' => $q,
         ]);
     }
 
@@ -83,8 +101,8 @@ class BarangKeluarController extends Controller
             $barangKeluar = BarangKeluar::create([
                 'no_surat' => $post['no_surat'],
                 'tanggal' => $post['tanggal'],
-                'toko_id' => !empty($post['toko_id']) ? $post['toko_id'] : null,
-                'sales_id' => !empty($post['sales_id']) ? $post['sales_id'] : null,
+                'toko_id' => ! empty($post['toko_id']) ? $post['toko_id'] : null,
+                'sales_id' => ! empty($post['sales_id']) ? $post['sales_id'] : null,
                 'sumber' => $post['sumber'] ?? 'gudang',
                 'keterangan' => $post['keterangan'] ?? null,
             ]);
@@ -94,23 +112,23 @@ class BarangKeluarController extends Controller
 
             foreach ($totalQty as $barangId => $qty) {
                 $stok = $this->stokService->lockStok($barangId);
-                if (!$stok) {
+                if (! $stok) {
                     throw new BusinessException('Stok barang tidak ditemukan');
                 }
                 if ($sumber === 'sales') {
-                    if ((int)$stok['stok_sales'] < $qty) {
+                    if ((int) $stok['stok_sales'] < $qty) {
                         $barang = Barang::find($barangId);
                         throw new BusinessException(
                             'Stok sales tidak mencukupi untuk barang: '
-                            . ($barang ? $barang->nama_barang : 'Barang')
+                            .($barang ? $barang->nama_barang : 'Barang')
                         );
                     }
                 } else {
-                    if ((int)$stok['stok_baik'] < $qty) {
+                    if ((int) $stok['stok_baik'] < $qty) {
                         $barang = Barang::find($barangId);
                         throw new BusinessException(
                             'Stok baik tidak mencukupi untuk barang: '
-                            . ($barang ? $barang->nama_barang : 'Barang')
+                            .($barang ? $barang->nama_barang : 'Barang')
                         );
                     }
                 }
@@ -141,9 +159,9 @@ class BarangKeluarController extends Controller
             $barangNames = [];
             foreach ($totalQty as $barangId => $qty) {
                 $b = Barang::find($barangId);
-                $barangNames[] = $qty . 'x ' . ($b ? $b->nama_barang : 'Barang');
+                $barangNames[] = $qty.'x '.($b ? $b->nama_barang : 'Barang');
             }
-            $message = $post['no_surat'] . ': ' . implode(', ', $barangNames);
+            $message = $post['no_surat'].': '.implode(', ', $barangNames);
 
             Notification::notify('Barang Keluar Baru', $message, 'barang_keluar', $id);
 
@@ -232,24 +250,24 @@ class BarangKeluarController extends Controller
             foreach ($totalQty as $barangId => $qty) {
                 $stok = $this->stokService->lockStok($barangId);
 
-                if (!$stok) {
+                if (! $stok) {
                     throw new BusinessException('Stok barang tidak ditemukan');
                 }
 
                 if ($sumberBaru === 'sales') {
-                    if ((int)$stok['stok_sales'] < $qty) {
+                    if ((int) $stok['stok_sales'] < $qty) {
                         $barang = Barang::find($barangId);
                         throw new BusinessException(
                             'Stok sales tidak mencukupi untuk barang: '
-                            . ($barang ? $barang->nama_barang : 'Barang')
+                            .($barang ? $barang->nama_barang : 'Barang')
                         );
                     }
                 } else {
-                    if ((int)$stok['stok_baik'] < $qty) {
+                    if ((int) $stok['stok_baik'] < $qty) {
                         $barang = Barang::find($barangId);
                         throw new BusinessException(
                             'Stok baik tidak mencukupi untuk barang: '
-                            . ($barang ? $barang->nama_barang : 'Barang')
+                            .($barang ? $barang->nama_barang : 'Barang')
                         );
                     }
                 }
@@ -260,8 +278,8 @@ class BarangKeluarController extends Controller
             $barangKeluar->update([
                 'no_surat' => $post['no_surat'],
                 'tanggal' => $post['tanggal'],
-                'toko_id' => !empty($post['toko_id']) ? $post['toko_id'] : null,
-                'sales_id' => !empty($post['sales_id']) ? $post['sales_id'] : null,
+                'toko_id' => ! empty($post['toko_id']) ? $post['toko_id'] : null,
+                'sales_id' => ! empty($post['sales_id']) ? $post['sales_id'] : null,
                 'sumber' => $sumberBaru,
                 'keterangan' => $post['keterangan'] ?? null,
             ]);
@@ -292,9 +310,9 @@ class BarangKeluarController extends Controller
             $barangNames = [];
             foreach ($totalQty as $barangId => $qty) {
                 $b = Barang::find($barangId);
-                $barangNames[] = $qty . 'x ' . ($b ? $b->nama_barang : 'Barang');
+                $barangNames[] = $qty.'x '.($b ? $b->nama_barang : 'Barang');
             }
-            $message = $post['no_surat'] . ': ' . implode(', ', $barangNames);
+            $message = $post['no_surat'].': '.implode(', ', $barangNames);
 
             Notification::notify('Barang Keluar Diupdate', $message, 'barang_keluar', $barangKeluar->id);
 
@@ -311,7 +329,7 @@ class BarangKeluarController extends Controller
                 $this->writeAuditLog(
                     'update_gagal',
                     $barangKeluar->id,
-                    'Gagal update barang keluar: ' . $this->getSafeErrorMessage($e),
+                    'Gagal update barang keluar: '.$this->getSafeErrorMessage($e),
                     [
                         'input' => $post,
                         'old_detail' => $failedDetail,
@@ -319,7 +337,7 @@ class BarangKeluarController extends Controller
                     ]
                 );
             } catch (\Exception $auditErr) {
-                \Log::error('Gagal menulis audit log: ' . $auditErr->getMessage());
+                \Log::error('Gagal menulis audit log: '.$auditErr->getMessage());
             }
 
             return redirect()
@@ -376,7 +394,7 @@ class BarangKeluarController extends Controller
             ->where('barang_keluar.id', $barangKeluar->id)
             ->first();
 
-        if (!$header) {
+        if (! $header) {
             abort(404, 'Data tidak ditemukan');
         }
 
@@ -398,7 +416,9 @@ class BarangKeluarController extends Controller
         $detail = [];
         foreach ((array) ($post['barang_id'] ?? []) as $i => $barangId) {
             $barangId = (int) $barangId;
-            if ($barangId <= 0) continue;
+            if ($barangId <= 0) {
+                continue;
+            }
 
             $qtyBaik = (int) ($post['qty_baik'][$i] ?? 0);
 
@@ -415,8 +435,8 @@ class BarangKeluarController extends Controller
 
         $validIds = Barang::select('id')->whereIn('id', array_keys($detail))->pluck('id')->toArray();
         foreach (array_keys($detail) as $bid) {
-            if (!in_array($bid, $validIds)) {
-                throw new BusinessException('Barang ID ' . $bid . ' tidak ditemukan');
+            if (! in_array($bid, $validIds)) {
+                throw new BusinessException('Barang ID '.$bid.' tidak ditemukan');
             }
         }
 
@@ -432,6 +452,7 @@ class BarangKeluarController extends Controller
                 $stokPerBarang[$d->barang_id] = $stok;
             }
         }
+
         return $stokPerBarang;
     }
 }
