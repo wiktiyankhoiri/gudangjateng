@@ -70,7 +70,7 @@ class MutasiController extends Controller
 
         if ($tipe === 'kanvas') {
             $tipeOptions = ['baik_ke_sales', 'sales_ke_baik'];
-            $noMutasi = date('Ym');
+            $noMutasi = Mutasi::generateNoMutasi('K');
             $title = 'Tambah Mutasi Kanvas';
             $salesList = User::where('role', 'sales')->orderBy('nama', 'ASC')->get();
         } else {
@@ -130,16 +130,7 @@ class MutasiController extends Controller
         }
 
         if ($prefix === 'K') {
-            $noMutasi = strtoupper(trim($post['no_mutasi'] ?? ''));
-            if (empty($noMutasi)) {
-                return redirect()->back()->withInput()->with('error', 'No mutasi wajib diisi');
-            }
-            if (str_contains($noMutasi, '.') || ! preg_match('/^\d{10,12}$/', $noMutasi)) {
-                return redirect()->back()->withInput()->with('error', 'Format no mutasi tidak valid, gunakan format YYYYMMXXXX (minimal 10 digit)');
-            }
-            if (Mutasi::where('no_mutasi', $noMutasi)->exists()) {
-                return redirect()->back()->withInput()->with('error', 'No mutasi sudah digunakan');
-            }
+            $noMutasi = Mutasi::generateNoMutasi('K');
         } else {
             $noMutasi = Mutasi::generateNoMutasi('M');
         }
@@ -496,6 +487,7 @@ class MutasiController extends Controller
             ->select('mutasi_detail.*', 'barang.kode_barang', 'barang.nama_barang')
             ->join('barang', 'barang.id', '=', 'mutasi_detail.barang_id')
             ->where('mutasi_id', $mutasi->id)
+            ->orderBy('mutasi_detail.id', 'ASC')
             ->get();
 
         $totalQty = $detail->sum('qty');
