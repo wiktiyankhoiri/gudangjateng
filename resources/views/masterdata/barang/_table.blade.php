@@ -1,3 +1,9 @@
+@php
+    $canEdit = in_array($userRole, ['admin', 'super_admin']);
+    $showGrosir = in_array($userRole, ['admin', 'super_admin', 'manager', 'audit', 'sales']);
+    $showKhusus = in_array($userRole, ['admin', 'super_admin', 'manager', 'audit']);
+    $totalCols = 4 + ($canEdit ? 1 : 0) + 1 + ($showGrosir ? 1 : 0) + ($showKhusus ? 1 : 0);
+@endphp
 <div class="overflow-x-auto">
     <table class="min-w-full">
         <thead>
@@ -6,6 +12,13 @@
                 <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">KODE</th>
                 <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-400">NAMA BARANG</th>
                 <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">SATUAN</th>
+                <th class="px-5 py-3 text-center text-xs font-medium text-warning-600 uppercase dark:text-warning-400">HARGA GOLD</th>
+                @if($showGrosir)
+                <th class="px-5 py-3 text-center text-xs font-medium text-success-600 uppercase dark:text-success-400">HARGA GROSIR</th>
+                @endif
+                @if($showKhusus)
+                <th class="px-5 py-3 text-center text-xs font-medium text-purple-600 uppercase dark:text-purple-400">HARGA KHUSUS</th>
+                @endif
                 @can('admin')
                 <th class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase dark:text-gray-400">AKSI</th>
                 @endcan
@@ -26,6 +39,19 @@
                         {{ strtoupper($b->satuan) }}
                     </span>
                 </td>
+                <td class="px-5 py-4 text-center text-sm font-medium text-warning-600 dark:text-warning-400 whitespace-nowrap">
+                    {{ $b->harga_gold ? 'Rp ' . number_format($b->harga_gold, 0, ',', '.') : '-' }}
+                </td>
+                @if($showGrosir)
+                <td class="px-5 py-4 text-center text-sm font-medium text-success-600 dark:text-success-400 whitespace-nowrap">
+                    {{ $b->harga_grosir ? 'Rp ' . number_format($b->harga_grosir, 0, ',', '.') : '-' }}
+                </td>
+                @endif
+                @if($showKhusus)
+                <td class="px-5 py-4 text-center text-sm font-medium text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                    {{ $b->harga_khusus ? 'Rp ' . number_format($b->harga_khusus, 0, ',', '.') : '-' }}
+                </td>
+                @endif
                 @can('admin')
                 <td class="px-5 py-4 text-center">
                     <div class="flex items-center justify-center gap-2">
@@ -48,7 +74,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="{{ Auth::user()->role === 'admin' ? 5 : 4 }}" class="px-5 py-12 text-center">
+                <td colspan="{{ $totalCols }}" class="px-5 py-12 text-center">
                     <svg class="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
                     </svg>

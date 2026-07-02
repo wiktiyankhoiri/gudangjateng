@@ -50,17 +50,24 @@
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.641 4.887C5.934 4.594 6.409 4.594 6.702 4.887L10 8.185L13.298 4.887C13.591 4.594 14.066 4.594 14.359 4.887C14.652 5.18 14.652 5.655 14.359 5.948L11.061 9.246L14.359 12.544C14.652 12.837 14.652 13.312 14.359 13.605C14.066 13.898 13.591 13.898 13.298 13.605L10 10.307L6.702 13.605C6.409 13.898 5.934 13.898 5.641 13.605C5.348 13.312 5.348 12.837 5.641 12.544L8.939 9.246L5.641 5.948C5.348 5.655 5.348 5.18 5.641 4.887Z" fill="currentColor"/></svg>
             </a>
             @endif
+            @php
+                $canTemplate = in_array($userRole, ['admin', 'super_admin']);
+                $canImport = in_array($userRole, ['admin', 'super_admin']);
+            @endphp
             <x-excel-dropdown
-                template-route="{{ route('masterdata.barang.template') }}"
                 export-route="{{ route('masterdata.barang.export') }}"
-                import-route="#"
+                export-pdf-route="{{ route('masterdata.barang.export-pdf') }}"
+                template-route="{{ $canTemplate ? route('masterdata.barang.template') : '' }}"
+                import-route="{{ $canImport ? '#' : '' }}"
             />
+            @can('admin')
             <a href="{{ route('masterdata.barang.create') }}" class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
                 Tambah
             </a>
+            @endcan
         </div>
     </div>
 
@@ -69,6 +76,7 @@
     </div>
 </div>
 
+@if(in_array($userRole, ['admin', 'super_admin']))
 <!-- Modal Import -->
 <div x-data="{ open: false }" @open-import.window="open = true" x-show="open" class="fixed inset-0 z-99999 flex items-center justify-center bg-gray-900/50 p-4" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div @click.outside="open = false" class="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
@@ -88,6 +96,9 @@
                     <li>kode_barang</li>
                     <li>nama_barang</li>
                     <li>satuan</li>
+                    <li>harga_gold (opsional)</li>
+                    <li>harga_grosir (opsional)</li>
+                    <li>harga_khusus (opsional)</li>
                 </ul>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Satuan hanya: <strong>PCS</strong> atau <strong>SET</strong></p>
                 <p class="text-xs text-brand-600 dark:text-brand-400 mt-2 font-medium">💡 Jika kode_barang sudah ada, data akan diupdate.</p>
@@ -109,4 +120,5 @@
         </form>
     </div>
 </div>
+@endif
 @endsection

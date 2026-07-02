@@ -1,20 +1,21 @@
 @props([
     'templateRoute' => null,
     'exportRoute' => null,
+    'exportPdfRoute' => null,
     'importRoute' => null,
 ])
 
 <div x-data="{ dropdownOpen: false }" class="relative">
-    <button @click="dropdownOpen = !dropdownOpen" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-400 dark:hover:bg-gray-800">
+    <button @click="dropdownOpen = !dropdownOpen" class="inline-flex items-center justify-center gap-2 rounded-lg bg-success-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs hover:bg-success-600">
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M2.5 5C2.5 4.58579 2.83579 4.25 3.25 4.25H16.75C17.1642 4.25 17.5 4.58579 17.5 5C17.5 5.41421 17.1642 5.75 16.75 5.75H3.25C2.83579 5.75 2.5 5.41421 2.5 5ZM4.75 10C4.75 9.58579 5.08579 9.25 5.5 9.25H14.5C14.9142 9.25 15.25 9.58579 15.25 10C15.25 10.4142 14.9142 10.75 14.5 10.75H5.5C5.08579 10.75 4.75 10.4142 4.75 10ZM7.5 14.75C7.08579 14.75 6.75 15.0858 6.75 15.5C6.75 15.9142 7.08579 16.25 7.5 16.25H12.5C12.9142 16.25 13.25 15.9142 13.25 15.5C13.25 15.0858 12.9142 14.75 12.5 14.75H7.5Z" fill="currentColor"/>
         </svg>
         Excel
-        <svg x-bind:class="dropdownOpen && 'rotate-180'" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg :class="{ 'rotate-180': dropdownOpen }" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
     </button>
-    <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" class="absolute right-0 z-50 mt-1 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-800 dark:bg-gray-900">
+    <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" class="absolute z-50 mt-1 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-800 dark:bg-gray-900 sm:right-0">
         @if($templateRoute)
             <a href="{{ $templateRoute }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -24,7 +25,13 @@
         @if($exportRoute)
             <a href="{{ $exportRoute }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 3.125C10.4142 3.125 10.75 3.46079 10.75 3.875V12.4822L13.6161 9.61612C13.909 9.32322 14.3839 9.32322 14.6768 9.61612C14.9697 9.90901 14.9697 10.3839 14.6768 10.6768L10.6768 14.6768C10.3839 14.9697 9.90901 14.9697 9.61612 14.6768L5.61612 10.6768C5.32322 10.3839 5.32322 9.90901 5.61612 9.61612C5.90901 9.32322 6.38388 9.32322 6.67678 9.61612L9.25 12.1893V3.875C9.25 3.46079 9.58579 3.125 10 3.125ZM4.5 11C4.91421 11 5.25 11.3358 5.25 11.75V15C5.25 15.6904 5.80964 16.25 6.5 16.25H13.5C14.1904 16.25 14.75 15.6904 14.75 15V11.75C14.75 11.3358 15.0858 11 15.5 11C15.9142 11 16.25 11.3358 16.25 11.75V15C16.25 16.5188 15.0188 17.75 13.5 17.75H6.5C4.98122 17.75 3.75 16.5188 3.75 15V11.75C3.75 11.3358 4.08579 11 4.5 11Z" fill="currentColor"/></svg>
-                Ekspor Data
+                Export Excel
+            </a>
+        @endif
+        @if($exportPdfRoute)
+            <a href="{{ $exportPdfRoute }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 3.25C4 2.83579 4.33579 2.5 4.75 2.5H12.75C12.9489 2.5 13.1397 2.57902 13.2803 2.71967L16.7803 6.21967C16.921 6.36032 17 6.55109 17 6.75V16.75C17 17.1642 16.6642 17.5 16.25 17.5H4.75C4.33579 17.5 4 17.1642 4 16.75V3.25ZM12 3.5H5.5V16.5H14.5V7H12.75C12.3358 7 12 6.66421 12 6.25V3.5ZM13.5 4.56066V5.5H14.4393L13.5 4.56066ZM10.75 9.75C11.1642 9.75 11.5 10.0858 11.5 10.5V12.75H13.25C13.6642 12.75 14 13.0858 14 13.5C14 13.9142 13.6642 14.25 13.25 14.25H11.5V16C11.5 16.4142 11.1642 16.75 10.75 16.75C10.3358 16.75 10 16.4142 10 16V14.25H8.75C8.33579 14.25 8 13.9142 8 13.5C8 13.0858 8.33579 12.75 8.75 12.75H10V10.5C10 10.0858 10.3358 9.75 10.75 9.75Z" fill="currentColor"/></svg>
+                Export PDF
             </a>
         @endif
         @if($templateRoute || $exportRoute)

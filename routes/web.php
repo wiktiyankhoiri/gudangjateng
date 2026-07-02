@@ -48,22 +48,44 @@ Route::middleware('auth')->group(function () {
     Route::post('/register', [RegisterController::class, 'register'])->middleware('role:admin');
 
     // ===================== MASTER DATA =====================
-    Route::prefix('masterdata')->name('masterdata.')->middleware('role:admin')->group(function () {
-        Route::resource('barang', BarangController::class)->except(['show']);
-        Route::resource('toko', TokoController::class)->except(['show']);
-        Route::resource('pabrik', PabrikController::class)->except(['show']);
+    // Read-only — semua role bisa lihat & export barang
+    Route::prefix('masterdata')->name('masterdata.')->middleware('role:admin,audit,manager,sales,staff')->group(function () {
+        Route::get('barang', [BarangController::class, 'index'])->name('barang.index');
+        Route::get('barang/export', [BarangController::class, 'export'])->name('barang.export');
+        Route::get('barang/export-pdf', [BarangController::class, 'exportPdf'])->name('barang.export-pdf');
+    });
 
+    // CRUD + Import — admin only
+    Route::prefix('masterdata')->name('masterdata.')->middleware('role:admin')->group(function () {
+        Route::get('barang/create', [BarangController::class, 'create'])->name('barang.create');
+        Route::post('barang', [BarangController::class, 'store'])->name('barang.store');
+        Route::get('barang/{barang}/edit', [BarangController::class, 'edit'])->name('barang.edit');
+        Route::put('barang/{barang}', [BarangController::class, 'update'])->name('barang.update');
         Route::post('barang/delete/{barang}', [BarangController::class, 'destroy'])->name('barang.delete');
         Route::get('barang/template', [BarangController::class, 'template'])->name('barang.template');
-        Route::get('barang/export', [BarangController::class, 'export'])->name('barang.export');
         Route::post('barang/import', [BarangController::class, 'import'])->name('barang.import');
+
+        // Toko & Pabrik — full admin only
+        Route::get('toko', [TokoController::class, 'index'])->name('toko.index');
+        Route::get('toko/create', [TokoController::class, 'create'])->name('toko.create');
+        Route::post('toko', [TokoController::class, 'store'])->name('toko.store');
+        Route::get('toko/{toko}/edit', [TokoController::class, 'edit'])->name('toko.edit');
+        Route::put('toko/{toko}', [TokoController::class, 'update'])->name('toko.update');
         Route::post('toko/delete/{toko}', [TokoController::class, 'destroy'])->name('toko.delete');
         Route::get('toko/template', [TokoController::class, 'template'])->name('toko.template');
         Route::get('toko/export', [TokoController::class, 'export'])->name('toko.export');
+        Route::get('toko/export-pdf', [TokoController::class, 'exportPdf'])->name('toko.export-pdf');
         Route::post('toko/import', [TokoController::class, 'import'])->name('toko.import');
+
+        Route::get('pabrik', [PabrikController::class, 'index'])->name('pabrik.index');
+        Route::get('pabrik/create', [PabrikController::class, 'create'])->name('pabrik.create');
+        Route::post('pabrik', [PabrikController::class, 'store'])->name('pabrik.store');
+        Route::get('pabrik/{pabrik}/edit', [PabrikController::class, 'edit'])->name('pabrik.edit');
+        Route::put('pabrik/{pabrik}', [PabrikController::class, 'update'])->name('pabrik.update');
         Route::post('pabrik/delete/{pabrik}', [PabrikController::class, 'destroy'])->name('pabrik.delete');
         Route::get('pabrik/template', [PabrikController::class, 'template'])->name('pabrik.template');
         Route::get('pabrik/export', [PabrikController::class, 'export'])->name('pabrik.export');
+        Route::get('pabrik/export-pdf', [PabrikController::class, 'exportPdf'])->name('pabrik.export-pdf');
         Route::post('pabrik/import', [PabrikController::class, 'import'])->name('pabrik.import');
     });
 
