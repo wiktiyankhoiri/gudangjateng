@@ -45,7 +45,7 @@ class BarangKeluarController extends Controller
             });
         }
 
-        $data = $query->orderBy('barang_keluar.id', 'DESC')->paginate(50);
+        $data = $query->orderBy('barang_keluar.tanggal', 'DESC')->orderBy('barang_keluar.id', 'DESC')->paginate(50);
 
         return view('transaksi.barang-keluar.index', [
             'title' => 'Barang Keluar',

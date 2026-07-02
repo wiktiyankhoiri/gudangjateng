@@ -34,7 +34,7 @@ class PenyesuaianStokController extends Controller
             $query->where('penyesuaian_stok.tanggal', '<=', $tanggalAkhir);
         }
 
-        $data = $query->orderBy('penyesuaian_stok.id', 'DESC')->paginate(50);
+        $data = $query->orderBy('penyesuaian_stok.tanggal', 'DESC')->orderBy('penyesuaian_stok.id', 'DESC')->paginate(50);
 
         return view('pengaturan.penyesuaian-stok.index', [
             'title' => 'Penyesuaian Stok',

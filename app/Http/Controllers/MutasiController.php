@@ -38,7 +38,7 @@ class MutasiController extends Controller
             });
         }
 
-        $data = $query->orderBy('mutasi.id', 'DESC')->paginate(50);
+        $data = $query->orderBy('mutasi.tanggal', 'DESC')->orderBy('mutasi.id', 'DESC')->paginate(50);
 
         foreach ($data as $m) {
             $grouped = [];

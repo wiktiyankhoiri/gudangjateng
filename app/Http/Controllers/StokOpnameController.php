@@ -41,7 +41,7 @@ class StokOpnameController extends Controller
             $query->where('stok_opname.status', $status);
         }
 
-        $data = $query->orderBy('stok_opname.id', 'DESC')->paginate(50);
+        $data = $query->orderBy('stok_opname.tanggal_opname', 'DESC')->orderBy('stok_opname.id', 'DESC')->paginate(50);
 
         return view('transaksi.stok-opname.index', [
             'title' => 'Stok Opname',

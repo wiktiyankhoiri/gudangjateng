@@ -67,7 +67,7 @@ class KartuStokController extends Controller
                             COALESCE(qty_rusak, 0)
                             ) as saldo_masuk,
                             0 as saldo_keluar,
-                            created_at as sort_time,
+                            DATE(created_at) as sort_time,
                             id as sort_id
                         FROM initialstok
                         WHERE barang_id = ? AND created_at >= ? AND created_at < ?
@@ -100,7 +100,7 @@ class KartuStokController extends Controller
                             COALESCE(bmd.qty_rusak, 0)
                             ) as saldo_masuk,
                             0 as saldo_keluar,
-                            bm.created_at as sort_time,
+                            bm.tanggal as sort_time,
                             bm.id as sort_id
                         FROM barang_masuk_detail bmd
                         JOIN barang_masuk bm ON bm.id = bmd.barang_masuk_id
@@ -133,7 +133,7 @@ class KartuStokController extends Controller
                             COALESCE(bkd.qty_baik, 0) as keluar,
                             0 as saldo_masuk,
                             COALESCE(bkd.qty_baik, 0) as saldo_keluar,
-                            bk.created_at as sort_time,
+                            bk.tanggal as sort_time,
                             bk.id as sort_id
                         FROM barang_keluar_detail bkd
                         JOIN barang_keluar bk ON bk.id = bkd.barang_keluar_id
@@ -193,7 +193,7 @@ class KartuStokController extends Controller
                             0 as keluar,
                             0 as saldo_masuk,
                             0 as saldo_keluar,
-                            m.created_at as sort_time,
+                            m.tanggal as sort_time,
                             m.id as sort_id
                         FROM mutasi_detail md
                         JOIN mutasi m ON m.id = md.mutasi_id
