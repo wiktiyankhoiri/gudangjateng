@@ -44,7 +44,7 @@ export function searchBar() {
             }
             this.timer = setTimeout(() => {
                 this.loading = true;
-                fetch(window.__gudangjateng.searchUrl + '?q=' + encodeURIComponent(this.query))
+                fetch(window.__gudangjateng.searchUrl + '?cari=' + encodeURIComponent(this.query))
                     .then(r => r.json())
                     .then(data => {
                         this.barang = data.barang || [];

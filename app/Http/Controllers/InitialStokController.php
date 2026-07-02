@@ -21,7 +21,7 @@ class InitialStokController extends Controller
     public function index(Request $request)
     {
         $this->requireAdmin();
-        $keyword = trim($request->get('q', ''));
+        $keyword = trim($request->get('cari', ''));
 
         $query = InitialStok::query()
             ->join('barang', 'barang.id', '=', 'initialstok.barang_id')
@@ -40,7 +40,7 @@ class InitialStokController extends Controller
         return view('pengaturan.initial-stok.index', [
             'title' => 'Initial Stok',
             'data' => $data,
-            'q' => $keyword,
+            'cari' => $keyword,
         ]);
     }
 

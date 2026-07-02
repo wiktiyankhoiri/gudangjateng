@@ -14,7 +14,7 @@ class TokoController extends Controller
     public function index(Request $request)
     {
         $this->requireAdmin();
-        $keyword = trim($request->get('q', ''));
+        $keyword = trim($request->get('cari', ''));
 
         $query = Toko::query();
 
@@ -30,13 +30,13 @@ class TokoController extends Controller
 
         if ($request->ajax()) {
             $html = view('masterdata.toko._table', compact('toko'))->render();
-            return response()->json(['html' => $html, 'q' => $keyword]);
+            return response()->json(['html' => $html, 'cari' => $keyword]);
         }
 
         return view('masterdata.toko.index', [
             'title' => 'Data Toko',
             'toko' => $toko,
-            'q' => $keyword,
+            'cari' => $keyword,
         ]);
     }
 

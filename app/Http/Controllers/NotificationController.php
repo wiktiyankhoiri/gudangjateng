@@ -30,7 +30,7 @@ class NotificationController extends Controller
     public function all(Request $request)
     {
         $userId = auth()->id();
-        $keyword = $request->get('q');
+        $keyword = $request->get('cari');
 
         $query = Notification::where('user_id', $userId);
 
@@ -83,7 +83,7 @@ class NotificationController extends Controller
         return view('notifikasi.all', [
             'title' => 'Notifikasi',
             'notifications' => $notifications,
-            'q' => $keyword,
+            'cari' => $keyword,
             'barangIds' => $barangIds,
         ]);
     }

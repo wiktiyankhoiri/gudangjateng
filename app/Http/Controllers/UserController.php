@@ -11,14 +11,14 @@ class UserController extends Controller
     {
         $this->requireSuperAdmin();
 
-        $q = $request->get('q');
+        $cari = $request->get('cari');
 
         $query = User::query();
 
-        if ($q) {
-            $query->where(function ($q2) use ($q) {
-                $q2->where('nama', 'like', "%{$q}%")
-                   ->orWhere('username', 'like', "%{$q}%");
+        if ($cari) {
+            $query->where(function ($q2) use ($cari) {
+                $q2->where('nama', 'like', "%{$cari}%")
+                   ->orWhere('username', 'like', "%{$cari}%");
             });
         }
 
@@ -27,7 +27,7 @@ class UserController extends Controller
         return view('pengaturan.management-user.index', [
             'title' => 'Management User',
             'data' => $data,
-            'q' => $q,
+            'cari' => $cari,
         ]);
     }
 

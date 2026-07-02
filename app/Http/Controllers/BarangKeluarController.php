@@ -23,7 +23,7 @@ class BarangKeluarController extends Controller
     {
         $this->requireAdmin();
 
-        $q = $request->get('q');
+        $cari = $request->get('cari');
 
         $query = BarangKeluar::query()
             ->select('barang_keluar.*', 'toko.nama_toko', 'sales.nama as nama_sales')
@@ -36,12 +36,12 @@ class BarangKeluarController extends Controller
             ->leftJoin('toko', 'toko.id', '=', 'barang_keluar.toko_id')
             ->leftJoin('users as sales', 'sales.id', '=', 'barang_keluar.sales_id');
 
-        if ($q) {
-            $query->where(function ($w) use ($q) {
-                $w->where('barang_keluar.no_surat', 'ILIKE', "%{$q}%")
-                    ->orWhere('barang_keluar.keterangan', 'ILIKE', "%{$q}%")
-                    ->orWhere('toko.nama_toko', 'ILIKE', "%{$q}%")
-                    ->orWhere('sales.nama', 'ILIKE', "%{$q}%");
+        if ($cari) {
+            $query->where(function ($w) use ($cari) {
+                $w->where('barang_keluar.no_surat', 'ILIKE', "%{$cari}%")
+                    ->orWhere('barang_keluar.keterangan', 'ILIKE', "%{$cari}%")
+                    ->orWhere('toko.nama_toko', 'ILIKE', "%{$cari}%")
+                    ->orWhere('sales.nama', 'ILIKE', "%{$cari}%");
             });
         }
 
@@ -50,7 +50,7 @@ class BarangKeluarController extends Controller
         return view('transaksi.barang-keluar.index', [
             'title' => 'Barang Keluar',
             'data' => $data,
-            'q' => $q,
+            'cari' => $cari,
         ]);
     }
 

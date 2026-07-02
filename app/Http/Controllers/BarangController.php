@@ -20,7 +20,7 @@ class BarangController extends Controller
     public function index(Request $request)
     {
         $this->requireAdmin();
-        $keyword = trim($request->get('q', ''));
+        $keyword = trim($request->get('cari', ''));
 
         $query = Barang::query();
 
@@ -39,14 +39,14 @@ class BarangController extends Controller
             $html = view('masterdata.barang._table', compact('barang'))->render();
             return response()->json([
                 'html' => $html,
-                'q' => $keyword,
+                'cari' => $keyword,
             ]);
         }
 
         return view('masterdata.barang.index', [
             'title' => 'Data Barang',
             'barang' => $barang,
-            'q' => $keyword,
+            'cari' => $keyword,
         ]);
     }
 

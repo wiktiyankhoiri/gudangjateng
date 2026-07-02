@@ -23,18 +23,18 @@ class MutasiController extends Controller
     {
         $this->requireAdmin();
 
-        $q = $request->get('q');
+        $cari = $request->get('cari');
 
         $query = Mutasi::query()
             ->select('mutasi.*', 'users.nama as nama_sales')
             ->leftJoin('users', 'users.id', '=', 'mutasi.sales_id')
             ->with('details');
 
-        if ($q) {
-            $query->where(function ($w) use ($q) {
-                $w->where('mutasi.no_mutasi', 'ILIKE', "%{$q}%")
-                    ->orWhere('mutasi.keterangan', 'ILIKE', "%{$q}%")
-                    ->orWhere('users.nama', 'ILIKE', "%{$q}%");
+        if ($cari) {
+            $query->where(function ($w) use ($cari) {
+                $w->where('mutasi.no_mutasi', 'ILIKE', "%{$cari}%")
+                    ->orWhere('mutasi.keterangan', 'ILIKE', "%{$cari}%")
+                    ->orWhere('users.nama', 'ILIKE', "%{$cari}%");
             });
         }
 
@@ -58,7 +58,7 @@ class MutasiController extends Controller
         return view('transaksi.mutasi.index', [
             'title' => 'Mutasi',
             'mutasi' => $data,
-            'q' => $q,
+            'cari' => $cari,
         ]);
     }
 

@@ -23,7 +23,7 @@ class BarangMasukController extends Controller
     {
         $this->requireAdmin();
 
-        $q = $request->get('q');
+        $cari = $request->get('cari');
 
         $query = BarangMasuk::query()
             ->select('barang_masuk.*')
@@ -36,13 +36,13 @@ class BarangMasukController extends Controller
             ->leftJoin('pabrik', 'pabrik.id', '=', 'barang_masuk.pabrik_id')
             ->leftJoin('toko', 'toko.id', '=', 'barang_masuk.toko_id');
 
-        if ($q) {
-            $query->where(function ($w) use ($q) {
-                $w->where('barang_masuk.no_surat', 'ILIKE', "%{$q}%")
-                    ->orWhere('barang_masuk.keterangan', 'ILIKE', "%{$q}%")
-                    ->orWhere('barang_masuk.tipe', 'ILIKE', "%{$q}%")
-                    ->orWhere('pabrik.nama_pabrik', 'ILIKE', "%{$q}%")
-                    ->orWhere('toko.nama_toko', 'ILIKE', "%{$q}%");
+        if ($cari) {
+            $query->where(function ($w) use ($cari) {
+                $w->where('barang_masuk.no_surat', 'ILIKE', "%{$cari}%")
+                    ->orWhere('barang_masuk.keterangan', 'ILIKE', "%{$cari}%")
+                    ->orWhere('barang_masuk.tipe', 'ILIKE', "%{$cari}%")
+                    ->orWhere('pabrik.nama_pabrik', 'ILIKE', "%{$cari}%")
+                    ->orWhere('toko.nama_toko', 'ILIKE', "%{$cari}%");
             });
         }
 
@@ -51,7 +51,7 @@ class BarangMasukController extends Controller
         return view('transaksi.barang-masuk.index', [
             'title' => 'Barang Masuk',
             'data' => $data,
-            'q' => $q,
+            'cari' => $cari,
         ]);
     }
 

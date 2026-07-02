@@ -9,7 +9,7 @@ class SearchController extends Controller
 {
     public function index(Request $request)
     {
-        $keyword = $request->get('q');
+        $keyword = $request->get('cari');
         if (!$keyword || strlen(trim($keyword)) < 2) {
             return response()->json(['barang' => [], 'transaksi' => []]);
         }

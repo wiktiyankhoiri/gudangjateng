@@ -14,7 +14,7 @@ class PabrikController extends Controller
     public function index(Request $request)
     {
         $this->requireAdmin();
-        $keyword = trim($request->get('q', ''));
+        $keyword = trim($request->get('cari', ''));
 
         $query = Pabrik::query();
 
@@ -30,13 +30,13 @@ class PabrikController extends Controller
 
         if ($request->ajax()) {
             $html = view('masterdata.pabrik._table', compact('pabrik'))->render();
-            return response()->json(['html' => $html, 'q' => $keyword]);
+            return response()->json(['html' => $html, 'cari' => $keyword]);
         }
 
         return view('masterdata.pabrik.index', [
             'title' => 'Data Pabrik',
             'pabrik' => $pabrik,
-            'q' => $keyword,
+            'cari' => $keyword,
         ]);
     }
 
