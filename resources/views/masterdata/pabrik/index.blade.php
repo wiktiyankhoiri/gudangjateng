@@ -50,16 +50,19 @@
             </a>
             @endif
             <x-excel-dropdown
-                template-route="{{ route('masterdata.pabrik.template') }}"
                 export-route="{{ route('masterdata.pabrik.export') }}"
+                export-pdf-route="{{ route('masterdata.pabrik.export-pdf') }}"
+                template-route="{{ route('masterdata.pabrik.template') }}"
                 import-route="#"
             />
+            @can('admin')
             <a href="{{ route('masterdata.pabrik.create') }}" class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 3.75V16.25M16.25 10H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
                 Tambah
             </a>
+            @endcan
         </div>
     </div>
 
@@ -68,6 +71,7 @@
     </div>
 </div>
 
+@can('admin')
 <!-- Modal Import -->
 <div x-data="{ open: false }" @open-import.window="open = true" x-show="open" class="fixed inset-0 z-99999 flex items-center justify-center bg-gray-900/50 p-4" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div @click.outside="open = false" class="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
@@ -107,4 +111,5 @@
         </form>
     </div>
 </div>
+@endcan
 @endsection

@@ -53,6 +53,26 @@
                     @error('nama_barang')<p class="mt-1 text-xs text-error-500">{{ $message }}</p>@enderror
                 </div>
             </div>
+            <div class="flex flex-col gap-6 md:flex-row">
+                <div class="md:w-1/3">
+                    <label class="mb-1.5 block text-sm font-medium text-warning-600 dark:text-warning-400">Harga Gold (Rp)</label>
+                    <input type="number" name="harga_gold" value="{{ old("harga_gold") }}" placeholder="0" min="0" step="1"
+                        class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
+                    @error('harga_gold')<p class="mt-1 text-xs text-error-500">{{ $message }}</p>@enderror
+                </div>
+                <div class="md:w-1/3">
+                    <label class="mb-1.5 block text-sm font-medium text-success-600 dark:text-success-400">Harga Grosir (Rp)</label>
+                    <input type="number" name="harga_grosir" value="{{ old("harga_grosir") }}" placeholder="0" min="0" step="1"
+                        class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
+                    @error('harga_grosir')<p class="mt-1 text-xs text-error-500">{{ $message }}</p>@enderror
+                </div>
+                <div class="md:w-1/3">
+                    <label class="mb-1.5 block text-sm font-medium text-purple-600 dark:text-purple-400">Harga Khusus (Rp)</label>
+                    <input type="number" name="harga_khusus" value="{{ old("harga_khusus") }}" placeholder="0" min="0" step="1"
+                        class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800">
+                    @error('harga_khusus')<p class="mt-1 text-xs text-error-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
         <div class="flex items-center justify-between px-5 py-4">
             <a href="{{ route('masterdata.barang.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.8334 10H4.16669M4.16669 10L9.16669 15M4.16669 10L9.16669 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>

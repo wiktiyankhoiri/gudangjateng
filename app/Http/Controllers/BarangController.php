@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BarangController extends Controller
 {
@@ -19,7 +20,6 @@ class BarangController extends Controller
 
     public function index(Request $request)
     {
-        $this->requireAdmin();
         $keyword = trim($request->get('cari', ''));
 
         $query = Barang::query();
@@ -34,9 +34,10 @@ class BarangController extends Controller
 
         $barang = $query->orderBy('id', 'ASC')->paginate(50);
 
-        // AJAX: return partial table untuk live search
+        $userRole = auth()->user()->role;
+
         if ($request->ajax()) {
-            $html = view('masterdata.barang._table', compact('barang'))->render();
+            $html = view('masterdata.barang._table', compact('barang', 'userRole'))->render();
             return response()->json([
                 'html' => $html,
                 'cari' => $keyword,
@@ -47,6 +48,7 @@ class BarangController extends Controller
             'title' => 'Data Barang',
             'barang' => $barang,
             'cari' => $keyword,
+            'userRole' => $userRole,
         ]);
     }
 
@@ -64,6 +66,9 @@ class BarangController extends Controller
             'kode_barang' => 'required|min:3|unique:barang,kode_barang',
             'nama_barang' => 'required|min:3',
             'satuan' => 'required|uppercase|in:PCS,SET',
+            'harga_gold' => 'nullable|numeric|min:0|max:9999999999999',
+            'harga_grosir' => 'nullable|numeric|min:0|max:9999999999999',
+            'harga_khusus' => 'nullable|numeric|min:0|max:9999999999999',
         ]);
 
         $validated['kode_barang'] = strtoupper(trim($validated['kode_barang']));
@@ -108,6 +113,9 @@ class BarangController extends Controller
             'kode_barang' => 'required|min:3|unique:barang,kode_barang,' . $barang->id,
             'nama_barang' => 'required|min:3',
             'satuan' => 'required|uppercase|in:PCS,SET',
+            'harga_gold' => 'nullable|numeric|min:0|max:9999999999999',
+            'harga_grosir' => 'nullable|numeric|min:0|max:9999999999999',
+            'harga_khusus' => 'nullable|numeric|min:0|max:9999999999999',
         ]);
 
         $validated['kode_barang'] = strtoupper(trim($validated['kode_barang']));
@@ -175,9 +183,26 @@ class BarangController extends Controller
         return false;
     }
 
+    protected function getPriceColumnsForRole(): array
+    {
+        $role = auth()->user()->role;
+
+        if (in_array($role, ['super_admin', 'admin'])) {
+            return ['harga_gold', 'harga_grosir', 'harga_khusus'];
+        }
+
+        if ($role === 'sales') {
+            return ['harga_gold', 'harga_grosir'];
+        }
+
+        return ['harga_gold'];
+    }
+
     public function template()
     {
         try {
+            $priceCols = $this->getPriceColumnsForRole();
+
             $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
 
@@ -185,7 +210,15 @@ class BarangController extends Controller
             $sheet->setCellValue('B1', 'nama_barang');
             $sheet->setCellValue('C1', 'satuan');
 
-            foreach (range('A', 'C') as $column) {
+            $colIndex = 'D';
+            $headers = ['harga_gold' => 'harga_gold', 'harga_grosir' => 'harga_grosir', 'harga_khusus' => 'harga_khusus'];
+            foreach ($priceCols as $col) {
+                $sheet->setCellValue($colIndex . '1', $headers[$col]);
+                $colIndex++;
+            }
+
+            $lastCol = $colIndex === 'D' ? 'C' : chr(ord('C') + count($priceCols));
+            foreach (range('A', $lastCol) as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
 
@@ -257,7 +290,7 @@ class BarangController extends Controller
                 $satuan = strtoupper(trim($row[2] ?? ''));
 
                 if (empty($kodeBarang) || empty($namaBarang)) {
-                    $skipped[] = 'Row ' . $rowNumber . ' : data kosong';
+                    $skipped[] = "Row {$rowNumber} : kode dan nama barang kosong, dilewati";
                     $rowNumber++;
                     continue;
                 }
@@ -267,33 +300,38 @@ class BarangController extends Controller
                 }
 
                 if (!in_array($satuan, ['PCS', 'SET'])) {
-                    $skipped[] = 'Row ' . $rowNumber . ' : satuan tidak valid';
+                    $skipped[] = "Row {$rowNumber} : satuan '{$satuan}' tidak valid (hanya PCS/SET)";
                     $rowNumber++;
                     continue;
                 }
 
+                $parseHarga = function ($val) {
+                    if ($val === null || $val === '') return null;
+                    if (is_numeric($val)) {
+                        $num = (int) $val;
+                        return $num === 0 ? null : $num;
+                    }
+                    $num = (int) str_replace('.', '', str_replace(',', '', $val));
+                    return $num === 0 ? null : $num;
+                };
+                $hargaGold   = $parseHarga($row[3] ?? null);
+                $hargaGrosir = $parseHarga($row[4] ?? null);
+                $hargaKhusus = $parseHarga($row[5] ?? null);
+
+                $data = [
+                    'nama_barang' => $namaBarang,
+                    'satuan' => $satuan,
+                ];
+                if ($hargaGold !== null) $data['harga_gold'] = $hargaGold;
+                if ($hargaGrosir !== null) $data['harga_grosir'] = $hargaGrosir;
+                if ($hargaKhusus !== null) $data['harga_khusus'] = $hargaKhusus;
+
                 $existing = Barang::where('kode_barang', $kodeBarang)->first();
                 if ($existing) {
-                    $existing->update([
-                        'nama_barang' => $namaBarang,
-                        'satuan' => $satuan,
-                    ]);
+                    $existing->update($data);
                     $updated++;
                 } else {
-                    $barang = Barang::create([
-                        'kode_barang' => $kodeBarang,
-                        'nama_barang' => $namaBarang,
-                        'satuan' => $satuan,
-                    ]);
-
-                    Stok::create([
-                        'barang_id' => $barang->id,
-                        'stok_baik' => 0,
-                        'stok_rusak' => 0,
-                        'updated_at' => now(),
-                    ]);
-
-                    $inserted++;
+                    $skipped[] = "Row {$rowNumber} : kode [{$kodeBarang}] - {$namaBarang} tidak ditemukan. Buat barang dulu lewat form Tambah.";
                 }
 
                 $rowNumber++;
@@ -329,6 +367,9 @@ class BarangController extends Controller
     public function export()
     {
         try {
+            $priceCols = $this->getPriceColumnsForRole();
+            $labelMap = ['harga_gold' => 'harga_gold', 'harga_grosir' => 'harga_grosir', 'harga_khusus' => 'harga_khusus'];
+
             $barang = Barang::orderBy('id', 'ASC')->get();
 
             $spreadsheet = new Spreadsheet();
@@ -338,17 +379,31 @@ class BarangController extends Controller
             $sheet->setCellValue('B1', 'nama_barang');
             $sheet->setCellValue('C1', 'satuan');
 
-            $sheet->getStyle('A1:C1')->getFont()->setBold(true);
+            $colIndex = 'D';
+            foreach ($priceCols as $col) {
+                $sheet->setCellValue($colIndex . '1', $labelMap[$col]);
+                $colIndex++;
+            }
+
+            $headerRange = 'A1:' . ($colIndex === 'D' ? 'C' : chr(ord('C') + count($priceCols))) . '1';
+            $sheet->getStyle($headerRange)->getFont()->setBold(true);
 
             $row = 2;
             foreach ($barang as $b) {
                 $sheet->setCellValue('A' . $row, $b->kode_barang);
                 $sheet->setCellValue('B' . $row, $b->nama_barang);
                 $sheet->setCellValue('C' . $row, strtoupper($b->satuan));
+
+                $ci = 'D';
+                foreach ($priceCols as $col) {
+                    $sheet->setCellValue($ci . $row, $b->{$col} ?? '');
+                    $ci++;
+                }
                 $row++;
             }
 
-            foreach (range('A', 'C') as $column) {
+            $lastColForSize = $colIndex === 'D' ? 'C' : chr(ord('C') + count($priceCols));
+            foreach (range('A', $lastColForSize) as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
 
@@ -363,6 +418,24 @@ class BarangController extends Controller
 
             $writer->save('php://output');
             exit;
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', $this->getSafeErrorMessage($e));
+        }
+    }
+
+    public function exportPdf()
+    {
+        try {
+            $priceCols = $this->getPriceColumnsForRole();
+            $labelMap = ['harga_gold' => 'Harga Gold', 'harga_grosir' => 'Harga Grosir', 'harga_khusus' => 'Harga Khusus'];
+
+            $barang = Barang::orderBy('id', 'ASC')->get();
+            $userRole = auth()->user()->role;
+
+            $pdf = Pdf::loadView('masterdata.barang.pdf', compact('barang', 'priceCols', 'labelMap', 'userRole'));
+            $pdf->setPaper('A4', 'landscape');
+
+            return $pdf->download('barang_' . date('Ymd_His') . '.pdf');
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', $this->getSafeErrorMessage($e));
         }

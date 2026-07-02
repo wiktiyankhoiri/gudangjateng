@@ -6,7 +6,7 @@ $isManager = $role === 'manager';
 $isSales = $role === 'sales' || $role === 'staff';
 $isSuperAdmin = $role === 'super_admin';
 
-$showMaster = $isAdmin || $isSuperAdmin;
+$showMaster = $isAdmin || $isSuperAdmin || $isAudit || $isManager || $isSales;
 $showTransaksi = $isAdmin || $isAudit || $isSuperAdmin;
 $showInitialStok = $isAdmin || $isSuperAdmin;
 $showPenyesuaian = $isAudit || $isSuperAdmin;
@@ -134,6 +134,7 @@ if ($isDashboard) $alpineSelected = 'Beranda';
                                         Data Barang
                                     </a>
                                 </li>
+                                @can('admin')
                                 <li>
                                     <a href="{{ route('masterdata.toko.index') }}" class="menu-dropdown-item group" x-bind:class="page === 'toko' || page === 'tokoCreate' || page === 'tokoEdit' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
                                         Data Toko
@@ -144,6 +145,7 @@ if ($isDashboard) $alpineSelected = 'Beranda';
                                         Data Pabrik
                                     </a>
                                 </li>
+                                @endcan
                             </ul>
                         </div>
                     </li>

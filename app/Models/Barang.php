@@ -17,6 +17,9 @@ class Barang extends Model
         'kode_barang',
         'nama_barang',
         'satuan',
+        'harga_gold',
+        'harga_grosir',
+        'harga_khusus',
     ];
 
     public function stok(): HasOne

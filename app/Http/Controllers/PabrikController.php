@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PabrikController extends Controller
 {
@@ -298,6 +299,20 @@ class PabrikController extends Controller
 
             $writer->save('php://output');
             exit;
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', $this->getSafeErrorMessage($e));
+        }
+    }
+
+    public function exportPdf()
+    {
+        try {
+            $pabrik = Pabrik::orderBy('id', 'ASC')->get();
+
+            $pdf = Pdf::loadView('masterdata.pabrik.pdf', compact('pabrik'));
+            $pdf->setPaper('A4', 'landscape');
+
+            return $pdf->download('pabrik_' . date('Ymd_His') . '.pdf');
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', $this->getSafeErrorMessage($e));
         }

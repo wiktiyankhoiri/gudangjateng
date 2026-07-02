@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TokoController extends Controller
 {
@@ -313,6 +314,20 @@ class TokoController extends Controller
 
             $writer->save('php://output');
             exit;
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', $this->getSafeErrorMessage($e));
+        }
+    }
+
+    public function exportPdf()
+    {
+        try {
+            $toko = Toko::orderBy('id', 'ASC')->get();
+
+            $pdf = Pdf::loadView('masterdata.toko.pdf', compact('toko'));
+            $pdf->setPaper('A4', 'landscape');
+
+            return $pdf->download('toko_' . date('Ymd_His') . '.pdf');
         } catch (\Throwable $e) {
             return redirect()->back()->with('error', $this->getSafeErrorMessage($e));
         }
