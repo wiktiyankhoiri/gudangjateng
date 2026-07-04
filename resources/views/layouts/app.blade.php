@@ -79,6 +79,8 @@ $pageMap = [
     'transaksi.stokopname.terapkan' => 'stokopname',
     'transaksi.stokopname.batalkan' => 'stokopname',
     'transaksi.stokopname.template' => 'stokopname',
+    'transaksi.stokopname.edit' => 'stokopname',
+    'transaksi.stokopname.update' => 'stokopname',
 
     // Initial Stok
     'pengaturan.initialstok.index' => 'initialStok',
@@ -171,6 +173,7 @@ $breadcrumbsMap = [
     'stokOpname'       => [['label' => 'Beranda', 'route' => 'beranda'], ['label' => 'Stok Opname', 'route' => null]],
     'stokOpnameCreate' => [['label' => 'Beranda', 'route' => 'beranda'], ['label' => 'Stok Opname', 'route' => null]],
     'stokOpnameDetail' => [['label' => 'Beranda', 'route' => 'beranda'], ['label' => 'Stok Opname', 'route' => null]],
+    'stokOpnameEdit'   => [['label' => 'Beranda', 'route' => 'beranda'], ['label' => 'Stok Opname', 'route' => null]],
 
     // Initial Stok
     'initialStok'       => [['label' => 'Beranda', 'route' => 'beranda'], ['label' => 'Initial Stok', 'route' => null]],

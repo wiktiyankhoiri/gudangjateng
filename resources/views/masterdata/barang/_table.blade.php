@@ -1,6 +1,6 @@
 @php
     $canEdit = in_array($userRole, ['admin', 'super_admin']);
-    $showGrosir = in_array($userRole, ['admin', 'super_admin', 'manager', 'audit', 'sales']);
+    $showGrosir = in_array($userRole, ['admin', 'super_admin', 'manager', 'audit']);
     $showKhusus = in_array($userRole, ['admin', 'super_admin']);
     $totalCols = 4 + ($canEdit ? 1 : 0) + 1 + ($showGrosir ? 1 : 0) + ($showKhusus ? 1 : 0);
 @endphp

@@ -58,9 +58,14 @@
         <!-- ACTION BUTTONS -->
         @if($opname->status === 'draft')
         <div class="mt-6 flex items-center gap-3">
+            <a href="{{ route('transaksi.stokopname.edit', $opname->id) }}"
+               class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.1667 3.5C16.7917 3.125 16.2917 2.91667 15.7917 2.91667C15.2917 2.91667 14.7917 3.125 14.4167 3.5L4.5 13.4167L3.83333 16.8333L7.25 16.1667L17.1667 6.25C17.5417 5.875 17.75 5.375 17.75 4.875C17.75 4.375 17.5417 3.875 17.1667 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Edit
+            </a>
             <form method="post" action="{{ route('transaksi.stokopname.selesaikan', $opname->id) }}" class="inline">
                 @csrf
-                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600" data-confirm-message="Selesaikan opname? Stok tidak akan berubah." data-confirm-ok="Ya, Selesaikan">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]" data-confirm-message="Selesaikan opname? Stok tidak akan berubah." data-confirm-ok="Ya, Selesaikan">
                     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.25 5.75L7.25 14.75L3.75 11.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Selesaikan
                 </button>
@@ -152,38 +157,21 @@
                             <span class="text-gray-300 dark:text-gray-600 mx-0.5">/</span>
                             <span class="text-purple-600 dark:text-purple-400">Sales</span> : <strong class="text-purple-600 dark:text-purple-400">{{ number_format($d->stok_fisik_sales ?? 0) }}</strong>
                         </td>
-                        <td class="px-3 py-3 text-center">
+                        <td class="px-3 py-3 text-center whitespace-nowrap">
                             @php
-                                $selBaik = (int) $d->selisih_baik;
-                                $selRusak = (int) $d->selisih_rusak;
-                                $selSales = (int) ($d->selisih_sales ?? 0);
+                                $selisihParts = [];
+                                $selData = ['baik' => (int) $d->selisih_baik, 'rusak' => (int) $d->selisih_rusak, 'sales' => (int) ($d->selisih_sales ?? 0)];
+                                foreach ($selData as $tipe => $val) {
+                                    if ($val !== 0) {
+                                        $cls = $val > 0 ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400';
+                                        $selisihParts[] = '<span class="'.$cls.'">'.($val > 0 ? '+' : '').$val.' '.$tipe.'</span>';
+                                    }
+                                }
                             @endphp
-                            @if($selBaik === 0 && $selRusak === 0 && $selSales === 0)
+                            @if(empty($selisihParts))
                                 <span class="text-sm text-gray-400">-</span>
                             @else
-                                <span class="text-sm font-medium">
-                                    @if($selBaik !== 0)
-                                        <span class="{{ $selBaik > 0 ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400' }}">
-                                            {{ $selBaik > 0 ? '+' : '' }}{{ $selBaik }} baik
-                                        </span>
-                                    @endif
-                                    @if($selBaik !== 0 && ($selRusak !== 0 || $selSales !== 0))
-                                        <span class="text-gray-400"> / </span>
-                                    @endif
-                                    @if($selRusak !== 0)
-                                        <span class="{{ $selRusak > 0 ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400' }}">
-                                            {{ $selRusak > 0 ? '+' : '' }}{{ $selRusak }} rusak
-                                        </span>
-                                    @endif
-                                    @if($selRusak !== 0 && $selSales !== 0)
-                                        <span class="text-gray-400"> / </span>
-                                    @endif
-                                    @if($selSales !== 0)
-                                        <span class="{{ $selSales > 0 ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400' }}">
-                                            {{ $selSales > 0 ? '+' : '' }}{{ $selSales }} sales
-                                        </span>
-                                    @endif
-                                </span>
+                                <span class="text-sm font-medium">{!! implode(' <span class="text-gray-400">/</span> ', $selisihParts) !!}</span>
                             @endif
                         </td>
                     </tr>

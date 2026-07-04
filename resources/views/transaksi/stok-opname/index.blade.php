@@ -140,6 +140,13 @@
                     <td class="px-5 py-4 text-sm text-center text-gray-500 dark:text-gray-400">{{ esc($d->nama_user) }}</td>
                     <td class="px-5 py-4 text-center">
                         <div class="flex items-center justify-center gap-2">
+                            @if($d->status === 'draft')
+                            <a href="{{ route('transaksi.stokopname.edit', $d->id) }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-lg bg-warning-50 p-2 text-warning-600 hover:bg-warning-100 dark:bg-warning-500/15 dark:text-warning-400"
+                               title="Edit">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.1667 3.5C16.7917 3.125 16.2917 2.91667 15.7917 2.91667C15.2917 2.91667 14.7917 3.125 14.4167 3.5L4.5 13.4167L3.83333 16.8333L7.25 16.1667L17.1667 6.25C17.5417 5.875 17.75 5.375 17.75 4.875C17.75 4.375 17.5417 3.875 17.1667 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </a>
+                            @endif
                             <a href="{{ route('transaksi.stokopname.detail', $d->id) }}"
                                class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-50 p-2 text-brand-600 hover:bg-brand-100 dark:bg-brand-500/15 dark:text-brand-400"
                                title="Lihat Detail">

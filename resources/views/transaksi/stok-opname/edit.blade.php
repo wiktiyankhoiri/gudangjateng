@@ -6,8 +6,8 @@
 
 <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
 
-    <form data-protect-submit="true" data-confirm-message="Pastikan data stok fisik sudah benar. Lanjutkan simpan?" data-confirm-ok="Ya, Simpan (Draft)" method="post"
-          action="{{ route('transaksi.stokopname.store') }}">
+    <form data-protect-submit="true" data-confirm-message="Pastikan data sudah benar. Lanjutkan update?" data-confirm-ok="Ya, Update" method="post"
+          action="{{ route('transaksi.stokopname.update', $opname->id) }}">
 
         @csrf
 
@@ -32,7 +32,7 @@
                 <div class="sm:col-span-2">
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Tanggal Opname</label>
                     <div class="relative">
-                        <input type="text" name="tanggal_opname" value="{{ old('tanggal_opname', date('Y-m-d')) }}"
+                        <input type="text" name="tanggal_opname" value="{{ old('tanggal_opname', $opname->tanggal_opname) }}"
                                class="datepicker h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent py-2.5 pr-11 pl-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
                                placeholder="Pilih tanggal" required>
                         <span class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -46,7 +46,7 @@
                 <!-- CATATAN -->
                 <div class="sm:col-span-2">
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Catatan</label>
-                    <input type="text" name="catatan" id="catatan" value="{{ old('catatan') }}"
+                    <input type="text" name="catatan" id="catatan" value="{{ old('catatan', $opname->catatan) }}"
                            class="h-11 w-full rounded-lg border dark:bg-dark-900 border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 uppercase"
                            placeholder=""
                            oninput="const s=this.selectionStart;this.value=this.value.toUpperCase();this.setSelectionRange(s,s)">
@@ -75,7 +75,16 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800" id="detailContainer">
                         @forelse($barang as $i => $b)
-                        @php $s = $stokAll[$b->id] ?? null; $stokBaik = $s['stok_baik'] ?? 0; $stokRusak = $s['stok_rusak'] ?? 0; $stokSales = $s['stok_sales'] ?? 0; @endphp
+                        @php
+                            $s = $stokAll[$b->id] ?? null;
+                            $stokBaik = $s['stok_baik'] ?? 0;
+                            $stokRusak = $s['stok_rusak'] ?? 0;
+                            $stokSales = $s['stok_sales'] ?? 0;
+                            $det = $detailIndexed[$b->id] ?? null;
+                            $oldFisikBaik = old('stok_fisik_baik.' . $i, $det ? $det->stok_fisik_baik : '');
+                            $oldFisikRusak = old('stok_fisik_rusak.' . $i, $det ? $det->stok_fisik_rusak : '');
+                            $oldFisikSales = old('stok_fisik_sales.' . $i, $det ? ($det->stok_fisik_sales ?? '') : '');
+                        @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50" data-kode="{{ $b->kode_barang }}" data-nama="{{ $b->nama_barang }}">
                             <td class="px-2 py-3 text-center">
                                 <span class="inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-sm font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
@@ -99,17 +108,20 @@
                             <td class="px-1 py-3 text-center">
                                 <div class="flex justify-center gap-px">
                                     <div>
-                                        <input type="number" name="stok_fisik_baik[]" min="0" value="{{ old('stok_fisik_baik.' . $i, '') }}" placeholder="Baik"
+                                        <input type="number" name="stok_fisik_baik[]" min="0" value="{{ $oldFisikBaik }}"
+                                                placeholder="Baik"
                                                 class="stok-fisik-input h-7 w-16 rounded border dark:bg-dark-900 border-gray-300 bg-transparent px-0.5 py-0.5 text-sm text-gray-800 text-center focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                                data-index="{{ $i }}">
                                     </div>
                                     <div>
-                                        <input type="number" name="stok_fisik_rusak[]" min="0" value="{{ old('stok_fisik_rusak.' . $i, '') }}" placeholder="Rusak"
+                                        <input type="number" name="stok_fisik_rusak[]" min="0" value="{{ $oldFisikRusak }}"
+                                               placeholder="Rusak"
                                                class="stok-fisik-input h-7 w-16 rounded border dark:bg-dark-900 border-gray-300 bg-transparent px-0.5 py-0.5 text-sm text-gray-800 text-center focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                                data-index="{{ $i }}">
                                     </div>
                                     <div>
-                                        <input type="number" name="stok_fisik_sales[]" min="0" value="{{ old('stok_fisik_sales.' . $i, '') }}" placeholder="Sales"
+                                        <input type="number" name="stok_fisik_sales[]" min="0" value="{{ $oldFisikSales }}"
+                                               placeholder="Sales"
                                                class="stok-fisik-input h-7 w-16 rounded border dark:bg-dark-900 border-gray-300 bg-transparent px-0.5 py-0.5 text-sm text-gray-800 text-center focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                                data-index="{{ $i }}">
                                     </div>
@@ -133,13 +145,13 @@
         </div>
 
         <div class="flex items-center justify-between px-5 py-4 border-t border-gray-200 dark:border-gray-800">
-            <a href="{{ route('transaksi.stokopname.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]">
+            <a href="{{ route('transaksi.stokopname.detail', $opname->id) }}" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03]">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.8334 10H4.16669M4.16669 10L9.16669 15M4.16669 10L9.16669 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Kembali
+                Batal
             </a>
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-3 text-sm font-medium text-white shadow-theme-xs transition hover:bg-brand-600">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.8334 8.33333V15.8333C15.8334 16.7538 15.0872 17.5 14.1667 17.5H5.83341C4.91294 17.5 4.16675 16.7538 4.16675 15.8333V4.16667C4.16675 3.24619 4.91294 2.5 5.83341 2.5H11.6667M15.8334 8.33333L11.6667 4.16667M15.8334 8.33333H11.6667V4.16667M7.50008 12.5H10.0001M7.50008 15H12.5001" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Simpan (Draft)
+                Update (Draft)
             </button>
         </div>
 
@@ -152,7 +164,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Hitung selisih otomatis
     document.querySelectorAll('.stok-fisik-input').forEach(function(input) {
         input.addEventListener('input', function() {
             var idx = this.getAttribute('data-index');
@@ -181,7 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
             var teks = parts.length > 0 ? parts.join(' / ') : '-';
             selisihLabel.textContent = teks;
 
-            // Warna selisih
             selisihLabel.className = 'selisih-label text-sm font-medium';
             var adaNegatif = selisihBaik < 0 || selisihRusak < 0 || selisihSales < 0;
             var adaPositif = selisihBaik > 0 || selisihRusak > 0 || selisihSales > 0;
@@ -195,12 +205,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Trigger initial calculation
     document.querySelectorAll('.stok-fisik-input').forEach(function(input) {
         input.dispatchEvent(new Event('input'));
     });
 
-    // Filter barang
     document.getElementById('cariBarang').addEventListener('input', function() {
         var q = this.value.toLowerCase().trim();
         var rows = document.querySelectorAll('#detailContainer tr[data-kode]');
@@ -218,7 +226,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Update placeholder catatan dinamis
     function updateCatatanPlaceholder() {
         var tglInput = document.querySelector('input[name="tanggal_opname"]');
         var catatanInput = document.getElementById('catatan');

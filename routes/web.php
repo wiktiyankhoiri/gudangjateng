@@ -128,6 +128,8 @@ Route::middleware('auth')->group(function () {
         Route::post('stok-opname/selesaikan/{stokOpname}', [StokOpnameController::class, 'selesaikan'])->name('stokopname.selesaikan');
         Route::post('stok-opname/terapkan/{stokOpname}', [StokOpnameController::class, 'terapkan'])->name('stokopname.terapkan');
         Route::post('stok-opname/batalkan/{stokOpname}', [StokOpnameController::class, 'batalkan'])->name('stokopname.batalkan');
+        Route::get('stok-opname/edit/{stokOpname}', [StokOpnameController::class, 'edit'])->name('stokopname.edit');
+        Route::post('stok-opname/update/{stokOpname}', [StokOpnameController::class, 'update'])->name('stokopname.update');
         Route::get('stok-opname/template', [StokOpnameController::class, 'template'])->name('stokopname.template');
         Route::post('stok-opname/import', [StokOpnameController::class, 'import'])->name('stokopname.import');
     });

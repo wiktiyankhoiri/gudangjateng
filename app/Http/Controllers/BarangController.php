@@ -191,7 +191,7 @@ class BarangController extends Controller
             return ['harga_gold', 'harga_grosir', 'harga_khusus'];
         }
 
-        if ($role === 'sales') {
+        if (in_array($role, ['manager', 'audit'])) {
             return ['harga_gold', 'harga_grosir'];
         }
 

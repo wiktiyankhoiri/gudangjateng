@@ -224,6 +224,157 @@ class StokOpnameController extends Controller
         ]);
     }
 
+    public function edit($id)
+    {
+        $opname = StokOpname::with('details')->findOrFail($id);
+
+        if ($opname->status !== 'draft') {
+            return redirect()->route('transaksi.stokopname.detail', $id)
+                ->with('error', 'Hanya opname status draft yang bisa diedit');
+        }
+
+        $barang = Barang::orderBy('kode_barang', 'ASC')->get();
+
+        $stokRows = DB::table('stok')
+            ->join('barang', 'barang.id', '=', 'stok.barang_id')
+            ->select('stok.*', 'barang.nama_barang', 'barang.kode_barang')
+            ->get();
+
+        $stokIndexed = [];
+        foreach ($stokRows as $row) {
+            $stokIndexed[$row->barang_id] = (array) $row;
+        }
+
+        $detailIndexed = [];
+        foreach ($opname->details as $d) {
+            $detailIndexed[$d->barang_id] = $d;
+        }
+
+        return view('transaksi.stok-opname.edit', [
+            'title' => 'Edit Stok Opname',
+            'opname' => $opname,
+            'barang' => $barang,
+            'stokAll' => $stokIndexed,
+            'detailIndexed' => $detailIndexed,
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $opname = StokOpname::findOrFail($id);
+
+        if ($opname->status !== 'draft') {
+            return redirect()->route('transaksi.stokopname.detail', $id)
+                ->with('error', 'Hanya opname status draft yang bisa diupdate');
+        }
+
+        $tanggalOpname = $request->input('tanggal_opname') ?? now()->format('Y-m-d');
+        $catatan = trim($request->input('catatan') ?? '');
+        $barangIds = (array) ($request->input('barang_id') ?? []);
+        $fisikBaik = (array) ($request->input('stok_fisik_baik') ?? []);
+        $fisikRusak = (array) ($request->input('stok_fisik_rusak') ?? []);
+        $fisikSales = (array) ($request->input('stok_fisik_sales') ?? []);
+        $keteranganDetail = (array) ($request->input('keterangan') ?? []);
+
+        if (empty($barangIds)) {
+            return redirect()->back()->withInput()->with('error', 'Detail barang wajib diisi');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Cek duplikat bulan/tahun (exclude dirinya sendiri)
+            $bulanOpname = date('m', strtotime($tanggalOpname));
+            $tahunOpname = date('Y', strtotime($tanggalOpname));
+            $sudahAda = StokOpname::where('id', '!=', $id)
+                ->whereMonth('tanggal_opname', $bulanOpname)
+                ->whereYear('tanggal_opname', $tahunOpname)
+                ->where('status', '!=', 'dibatalkan')
+                ->exists();
+
+            if ($sudahAda) {
+                throw new BusinessException(
+                    "Stok opname untuk bulan {$bulanOpname}/{$tahunOpname} sudah ada"
+                );
+            }
+
+            // Update header
+            $opname->update([
+                'tanggal_opname' => $tanggalOpname,
+                'catatan' => $catatan,
+            ]);
+
+            // Hapus detail lama
+            StokOpnameDetail::where('stok_opname_id', $opname->id)->delete();
+
+            $totalBarang = 0;
+
+            foreach ($barangIds as $i => $barangId) {
+                $barangId = (int) $barangId;
+                if ($barangId <= 0) {
+                    continue;
+                }
+
+                $stokSistem = DB::table('stok')->where('barang_id', $barangId)->first();
+                $stokSistemBaik = $stokSistem ? (int) $stokSistem->stok_baik : 0;
+                $stokSistemRusak = $stokSistem ? (int) $stokSistem->stok_rusak : 0;
+                $stokSistemSales = $stokSistem ? (int) $stokSistem->stok_sales : 0;
+
+                $fisikBaikVal = (int) ($fisikBaik[$i] ?? 0);
+                $fisikRusakVal = (int) ($fisikRusak[$i] ?? 0);
+                $fisikSalesVal = (int) ($fisikSales[$i] ?? 0);
+
+                if ($fisikBaikVal < 0 || $fisikRusakVal < 0 || $fisikSalesVal < 0) {
+                    throw new BusinessException('Jumlah tidak boleh negatif');
+                }
+
+                if ($fisikBaikVal === 0 && $fisikRusakVal === 0 && $fisikSalesVal === 0) {
+                    continue;
+                }
+
+                StokOpnameDetail::create([
+                    'stok_opname_id' => $opname->id,
+                    'barang_id' => $barangId,
+                    'stok_sistem_baik' => $stokSistemBaik,
+                    'stok_sistem_rusak' => $stokSistemRusak,
+                    'stok_sistem_sales' => $stokSistemSales,
+                    'stok_fisik_baik' => $fisikBaikVal,
+                    'stok_fisik_rusak' => $fisikRusakVal,
+                    'stok_fisik_sales' => $fisikSalesVal,
+                    'selisih_baik' => $fisikBaikVal - $stokSistemBaik,
+                    'selisih_rusak' => $fisikRusakVal - $stokSistemRusak,
+                    'selisih_sales' => $fisikSalesVal - $stokSistemSales,
+                    'keterangan' => trim($keteranganDetail[$i] ?? ''),
+                ]);
+
+                $totalBarang++;
+            }
+
+            if ($totalBarang === 0) {
+                $opname->delete();
+                throw new BusinessException('Setidaknya satu barang harus diisi');
+            }
+
+            DB::commit();
+
+            $this->writeAuditLog('update', $opname->id, 'Stok opname berhasil diupdate', [
+                'no_opname' => $opname->no_opname,
+                'total_barang' => $totalBarang,
+            ]);
+
+            return redirect()->route('transaksi.stokopname.detail', $opname->id)
+                ->with('success', 'Stok opname berhasil diupdate');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', $this->getSafeErrorMessage($e));
+        }
+    }
+
     public function selesaikan($id)
     {
         $opname = StokOpname::findOrFail($id);
@@ -341,9 +492,11 @@ class StokOpnameController extends Controller
             $sheet->setCellValue('B1', 'nama_barang');
             $sheet->setCellValue('C1', 'stok_sistem_baik');
             $sheet->setCellValue('D1', 'stok_sistem_rusak');
-            $sheet->setCellValue('E1', 'stok_fisik_baik');
-            $sheet->setCellValue('F1', 'stok_fisik_rusak');
-            $sheet->setCellValue('G1', 'keterangan');
+            $sheet->setCellValue('E1', 'stok_sistem_sales');
+            $sheet->setCellValue('F1', 'stok_fisik_baik');
+            $sheet->setCellValue('G1', 'stok_fisik_rusak');
+            $sheet->setCellValue('H1', 'stok_fisik_sales');
+            $sheet->setCellValue('I1', 'keterangan');
 
             // Isi data barang
             $barang = Barang::orderBy('kode_barang', 'ASC')->get();
@@ -354,13 +507,15 @@ class StokOpnameController extends Controller
                 $sheet->setCellValue('B'.$baris, $b->nama_barang);
                 $sheet->setCellValue('C'.$baris, $stok ? (int) $stok->stok_baik : 0);
                 $sheet->setCellValue('D'.$baris, $stok ? (int) $stok->stok_rusak : 0);
-                $sheet->setCellValue('E'.$baris, '');
+                $sheet->setCellValue('E'.$baris, $stok ? (int) $stok->stok_sales : 0);
                 $sheet->setCellValue('F'.$baris, '');
                 $sheet->setCellValue('G'.$baris, '');
+                $sheet->setCellValue('H'.$baris, '');
+                $sheet->setCellValue('I'.$baris, '');
                 $baris++;
             }
 
-            foreach (range('A', 'G') as $column) {
+            foreach (range('A', 'I') as $column) {
                 $sheet->getColumnDimension($column)->setAutoSize(true);
             }
 
@@ -411,13 +566,38 @@ class StokOpnameController extends Controller
         try {
             $spreadsheet = IOFactory::load($file->getRealPath());
             $rows = $spreadsheet->getActiveSheet()->toArray();
-            unset($rows[0]); // Hapus header
 
-            if (empty($rows)) {
+            if (empty($rows) || count($rows) < 2) {
                 return redirect()->back()->with('error', 'Data excel kosong');
             }
 
+            // Validasi header kolom
+            $expectedHeaders = ['kode_barang', 'nama_barang', 'stok_sistem_baik', 'stok_sistem_rusak', 'stok_sistem_sales', 'stok_fisik_baik', 'stok_fisik_rusak', 'stok_fisik_sales', 'keterangan'];
+            $headerRow = array_map(function ($v) { return strtolower(trim((string) $v)); }, $rows[0]);
+            foreach ($expectedHeaders as $idx => $expected) {
+                $actual = $headerRow[$idx] ?? '';
+                if ($actual !== $expected) {
+                    return redirect()->back()->with('error', "Header kolom ke-".($idx+1)." tidak sesuai. Diharapkan '{$expected}', ditemukan '{$actual}'. Silakan gunakan template yang disediakan.");
+                }
+            }
+
+            unset($rows[0]); // Hapus header
+
+            // Cek duplikat bulan/tahun
+            $bulanOpname = date('m', strtotime($tanggalOpname));
+            $tahunOpname = date('Y', strtotime($tanggalOpname));
+            $sudahAda = StokOpname::whereMonth('tanggal_opname', $bulanOpname)
+                ->whereYear('tanggal_opname', $tahunOpname)
+                ->where('status', '!=', 'dibatalkan')
+                ->exists();
+
             DB::beginTransaction();
+
+            if ($sudahAda) {
+                throw new BusinessException(
+                    "Stok opname untuk bulan {$bulanOpname}/{$tahunOpname} sudah ada"
+                );
+            }
 
             // Generate nomor opname
             $lastOpname = StokOpname::whereDate('created_at', now()->format('Y-m-d'))
@@ -436,52 +616,59 @@ class StokOpnameController extends Controller
             ]);
 
             $totalImpor = 0;
+            $totalError = 0;
+            $errorMessages = [];
             $rowNumber = 2;
 
             foreach ($rows as $row) {
                 $kodeBarang = strtoupper(trim($row[0] ?? ''));
                 if (empty($kodeBarang)) {
                     $rowNumber++;
-
                     continue;
                 }
 
                 $barang = Barang::where('kode_barang', $kodeBarang)->first();
                 if (! $barang) {
+                    $totalError++;
+                    $errorMessages[] = "Baris {$rowNumber}: kode barang '{$kodeBarang}' tidak ditemukan";
                     $rowNumber++;
-
                     continue;
                 }
 
-                $fisikBaik = (int) ($row[4] ?? 0); // Kolom E: stok_fisik_baik
-                $fisikRusak = (int) ($row[5] ?? 0); // Kolom F: stok_fisik_rusak
-                $ket = trim($row[6] ?? ''); // Kolom G: keterangan
+                $fisikBaik = (int) ($row[5] ?? 0);  // Kolom F: stok_fisik_baik
+                $fisikRusak = (int) ($row[6] ?? 0); // Kolom G: stok_fisik_rusak
+                $fisikSales = (int) ($row[7] ?? 0); // Kolom H: stok_fisik_sales
+                $ket = trim($row[8] ?? '');         // Kolom I: keterangan
 
-                if ($fisikBaik < 0 || $fisikRusak < 0) {
+                if ($fisikBaik < 0 || $fisikRusak < 0 || $fisikSales < 0) {
+                    $totalError++;
+                    $errorMessages[] = "Baris {$rowNumber}: {$barang->kode_barang} - jumlah stok fisik tidak boleh negatif";
                     $rowNumber++;
-
                     continue;
                 }
 
-                if ($fisikBaik === 0 && $fisikRusak === 0) {
+                if ($fisikBaik === 0 && $fisikRusak === 0 && $fisikSales === 0) {
                     $rowNumber++;
-
                     continue;
                 }
 
                 $stokSistem = Stok::where('barang_id', $barang->id)->first();
                 $stokSistemBaik = $stokSistem ? (int) $stokSistem->stok_baik : 0;
                 $stokSistemRusak = $stokSistem ? (int) $stokSistem->stok_rusak : 0;
+                $stokSistemSales = $stokSistem ? (int) $stokSistem->stok_sales : 0;
 
                 StokOpnameDetail::create([
                     'stok_opname_id' => $stokOpname->id,
                     'barang_id' => $barang->id,
                     'stok_sistem_baik' => $stokSistemBaik,
                     'stok_sistem_rusak' => $stokSistemRusak,
+                    'stok_sistem_sales' => $stokSistemSales,
                     'stok_fisik_baik' => $fisikBaik,
                     'stok_fisik_rusak' => $fisikRusak,
+                    'stok_fisik_sales' => $fisikSales,
                     'selisih_baik' => $fisikBaik - $stokSistemBaik,
                     'selisih_rusak' => $fisikRusak - $stokSistemRusak,
+                    'selisih_sales' => $fisikSales - $stokSistemSales,
                     'keterangan' => $ket,
                 ]);
 
@@ -491,18 +678,27 @@ class StokOpnameController extends Controller
 
             if ($totalImpor === 0) {
                 $stokOpname->delete();
-                throw new BusinessException('Tidak ada data valid yang diimpor');
+                throw new BusinessException('Tidak ada data valid yang diimpor. '.implode(', ', $errorMessages));
             }
 
             DB::commit();
 
+            $message = $totalImpor.' barang berhasil diimpor';
+            if ($totalError > 0) {
+                $message .= ', '.$totalError.' baris dilewati: '.implode('; ', array_slice($errorMessages, 0, 10));
+                if (count($errorMessages) > 10) {
+                    $message .= ' (dan '. (count($errorMessages) - 10) .' lainnya)';
+                }
+            }
+
             $this->writeAuditLog('import', $stokOpname->id, 'Stok opname diimpor dari Excel', [
                 'no_opname' => $noOpname,
                 'total_barang' => $totalImpor,
+                'total_error' => $totalError,
             ]);
 
             return redirect()->route('transaksi.stokopname.detail', $stokOpname->id)
-                ->with('success', $totalImpor.' barang berhasil diimpor');
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollBack();
