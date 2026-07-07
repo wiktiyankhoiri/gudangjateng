@@ -55,7 +55,7 @@
                         </td>
                         <td class="px-5 py-4">
                             <div class="text-sm font-medium text-gray-800 dark:text-white/90">{{ esc($n->title) }}</div>
-                            <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 truncate max-w-[300px]">{{ esc($n->message) }}</div>
+                            <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ esc($n->message) }}</div>
                         </td>
                         <td class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ $n->created_at?->format('d/m/Y H:i') ?? $n->created_at }}</td>
                         <td class="px-5 py-4 text-center">

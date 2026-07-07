@@ -140,13 +140,9 @@ class BarangMasukController extends Controller
                 'detail' => $detailBarang,
             ]);
 
-            $barangNames = [];
-            foreach ($detailBarang as $barangId => $qty) {
-                $b = Barang::find($barangId);
-                $totalQty = $qty['qty_baik'] + $qty['qty_rusak'];
-                $barangNames[] = $totalQty.'x '.($b ? $b->nama_barang : 'Barang');
-            }
-            $message = $post['no_surat'].': '.implode(', ', $barangNames);
+            $totalItems = count($detailBarang);
+            $totalPcs = array_sum(array_map(fn($v) => ($v['qty_baik'] ?? 0) + ($v['qty_rusak'] ?? 0), $detailBarang));
+            $message = $post['no_surat'].' · '.$totalItems.' item ('.$totalPcs.' pcs)';
 
             Notification::notify('Barang Masuk Baru', $message, 'barang_masuk', $id);
 
@@ -265,13 +261,9 @@ class BarangMasukController extends Controller
                 'new_detail' => $detailBarang,
             ]);
 
-            $barangNames = [];
-            foreach ($detailBarang as $barangId => $qty) {
-                $b = Barang::find($barangId);
-                $totalQty = $qty['qty_baik'] + $qty['qty_rusak'];
-                $barangNames[] = $totalQty.'x '.($b ? $b->nama_barang : 'Barang');
-            }
-            $message = $post['no_surat'].': '.implode(', ', $barangNames);
+            $totalItems = count($detailBarang);
+            $totalPcs = array_sum(array_map(fn($v) => ($v['qty_baik'] ?? 0) + ($v['qty_rusak'] ?? 0), $detailBarang));
+            $message = $post['no_surat'].' · '.$totalItems.' item ('.$totalPcs.' pcs)';
 
             Notification::notify('Barang Masuk Diupdate', $message, 'barang_masuk', $barangMasuk->id);
 

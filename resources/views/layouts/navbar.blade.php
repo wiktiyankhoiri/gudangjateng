@@ -257,10 +257,7 @@
                                         </span>
 
                                         <span class="block min-w-0 flex-1">
-                                            <span class="text-theme-sm mb-1.5 block text-gray-500 dark:text-gray-400">
-                                                <span class="font-medium text-gray-800 dark:text-white/90" x-text="n.title"></span>
-                                                <span x-text="' ' + n.message"></span>
-                                            </span>
+                                            <span class="text-theme-sm mb-1.5 block font-medium text-gray-800 dark:text-white/90" x-text="n.message"></span>
                                             <span class="text-theme-xs flex items-center gap-2 text-gray-500 dark:text-gray-400">
                                                 <span x-text="typeLabel(n.type)"></span>
                                                 <span class="h-1 w-1 rounded-full bg-gray-400"></span>

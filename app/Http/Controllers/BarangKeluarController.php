@@ -156,12 +156,7 @@ class BarangKeluarController extends Controller
                 'detail' => $totalQty,
             ]);
 
-            $barangNames = [];
-            foreach ($totalQty as $barangId => $qty) {
-                $b = Barang::find($barangId);
-                $barangNames[] = $qty.'x '.($b ? $b->nama_barang : 'Barang');
-            }
-            $message = $post['no_surat'].': '.implode(', ', $barangNames);
+            $message = $post['no_surat'].' · '.count($totalQty).' item ('.array_sum($totalQty).' pcs)';
 
             Notification::notify('Barang Keluar Baru', $message, 'barang_keluar', $id);
 
@@ -307,12 +302,7 @@ class BarangKeluarController extends Controller
                 'new_detail' => $totalQty,
             ]);
 
-            $barangNames = [];
-            foreach ($totalQty as $barangId => $qty) {
-                $b = Barang::find($barangId);
-                $barangNames[] = $qty.'x '.($b ? $b->nama_barang : 'Barang');
-            }
-            $message = $post['no_surat'].': '.implode(', ', $barangNames);
+            $message = $post['no_surat'].' · '.count($totalQty).' item ('.array_sum($totalQty).' pcs)';
 
             Notification::notify('Barang Keluar Diupdate', $message, 'barang_keluar', $barangKeluar->id);
 
