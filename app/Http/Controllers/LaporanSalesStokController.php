@@ -164,8 +164,16 @@ class LaporanSalesStokController extends Controller
 
     public function index(Request $request)
     {
-        $tanggalAwal = $this->normalizeDate($request->get('tanggal_awal'));
-        $tanggalAkhir = $this->normalizeDate($request->get('tanggal_akhir'));
+        $rawAwal = $request->input('tanggal_awal');
+        $rawAkhir = $request->input('tanggal_akhir');
+
+        if (($request->has('tanggal_awal') || $request->has('tanggal_akhir')) && (!$rawAwal || !$rawAkhir)) {
+            return redirect()->route('laporan.salesstok.index')
+                ->with('error', 'Silakan pilih tanggal awal dan akhir terlebih dahulu');
+        }
+
+        $tanggalAwal = $this->normalizeDate($rawAwal);
+        $tanggalAkhir = $this->normalizeDate($rawAkhir);
 
         $page = (int) ($request->get('page') ?? 1);
         $perPage = 50;

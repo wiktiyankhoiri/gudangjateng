@@ -25,7 +25,12 @@ class KartuStokController extends Controller
         if ($barangId) {
             $barangSelected = Barang::find($barangId);
 
-            $tanggalAwal = $tanggalAwal ?: date('Y-m-d', strtotime('-1 month'));
+            if (($request->has('tanggal_awal') || $request->has('tanggal_akhir')) && (!$request->filled('tanggal_awal') || !$request->filled('tanggal_akhir'))) {
+                return redirect()->route('laporan.kartustok.index', ['barang_id' => $barangId])
+                    ->with('error', 'Silakan pilih tanggal awal dan akhir terlebih dahulu');
+            }
+
+            $tanggalAwal = $tanggalAwal ?: date('Y-m-01');
             $tanggalAkhir = $tanggalAkhir ?: date('Y-m-d');
 
             if ($tanggalAwal > $tanggalAkhir) {
@@ -344,6 +349,41 @@ class KartuStokController extends Controller
             $totalMasuk = (int) ($totals->total_masuk ?? 0);
             $totalKeluar = (int) ($totals->total_keluar ?? 0);
 
+            $saldoAwalSql = '
+                SELECT
+                    COALESCE((
+                        SELECT COALESCE(SUM(qty_baik + qty_rusak), 0)
+                        FROM initialstok
+                        WHERE barang_id = ? AND created_at < ?
+                    ), 0) +
+                    COALESCE((
+                        SELECT COALESCE(SUM(bmd.qty_baik + bmd.qty_rusak), 0)
+                        FROM barang_masuk_detail bmd
+                        JOIN barang_masuk bm ON bm.id = bmd.barang_masuk_id
+                        WHERE bmd.barang_id = ? AND bm.tanggal < ?
+                    ), 0) -
+                    COALESCE((
+                        SELECT COALESCE(SUM(bkd.qty_baik), 0)
+                        FROM barang_keluar_detail bkd
+                        JOIN barang_keluar bk ON bk.id = bkd.barang_keluar_id
+                        WHERE bkd.barang_id = ? AND bk.tanggal < ?
+                    ), 0) +
+                    COALESCE((
+                        SELECT COALESCE(SUM(selisih_baik + selisih_rusak + selisih_sales), 0)
+                        FROM penyesuaian_stok
+                        WHERE barang_id = ? AND tanggal < ?
+                    ), 0) as saldo_awal
+            ';
+
+            $saldoAwalResult = DB::selectOne($saldoAwalSql, [
+                $barangId, $tanggalAwal,
+                $barangId, $tanggalAwal,
+                $barangId, $tanggalAwal,
+                $barangId, $tanggalAwal,
+            ]);
+
+            $saldoAwal = (int) ($saldoAwalResult->saldo_awal ?? 0);
+
             $stok = Stok::where('barang_id', $barangId)->first();
 
             if ($stok) {
@@ -368,6 +408,7 @@ class KartuStokController extends Controller
             'barangSelected' => $barangSelected,
             'histori' => $histori,
             'pagination' => $pagination,
+            'saldoAwal' => $saldoAwal ?? 0,
             'saldoAkhir' => $saldoAkhir,
             'totalMasuk' => $totalMasuk,
             'totalKeluar' => $totalKeluar,
