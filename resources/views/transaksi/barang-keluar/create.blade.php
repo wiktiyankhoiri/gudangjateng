@@ -233,9 +233,11 @@ document.addEventListener('DOMContentLoaded', function() {
         var row = `<tr class="row-barang">
             <td class="px-5 py-3 text-center text-sm font-medium text-gray-800 dark:text-white/90">${kode}</td>
             <td class="px-5 py-3 text-sm text-gray-800 dark:text-white/90">${nama}</td>
-            <td class="px-5 py-3 text-center text-sm text-gray-800 dark:text-white/90">${qty}</td>
+            <td class="px-1 py-3">
+                <input type="number" name="qty_baik[]" value="${qty}" min="1"
+                       class="h-8 w-full rounded-lg border border-gray-300 bg-transparent px-2 py-1.5 text-sm text-center text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" required>
+            </td>
             <td class="px-5 py-3 text-center">
-                <input type="hidden" name="qty_baik[]" value="${qty}">
                 <input type="hidden" name="qty_rusak[]" value="0">
                 <input type="hidden" name="barang_id[]" value="${opt.value}">
                 <button type="button" class="btnHapus inline-flex items-center justify-center rounded-lg bg-error-50 p-2 text-error-600 hover:bg-error-100 dark:bg-error-500/15 dark:text-error-400">
